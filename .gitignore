@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+venv/
+.venv/
+
+# Datasets y caché (viven fuera de OneDrive, en C:\Users\rolda\gemelo_mano)
+datos/
+cache/
+*.npz
+
+# Documentos personales (agregar a mano si se quieren publicar)
+*.pdf
