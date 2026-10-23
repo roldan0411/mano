@@ -1,0 +1,13 @@
+modelo,tarea,R²,tipo de R²,datos,precision,pureza,ari
+Red actual 8-32-16-7,gesto,0.8173,pseudo-R² McFadden,D1 prueba,0.8581,,
+Codificador contrastivo (sonda lineal),pose 6 GDL,0.5681,R² (Ridge sobre embedding),D1 validación,,,
+Codificador contrastivo (sonda logística),gesto,0.7989,pseudo-R² McFadden,D1 validación,0.8375,,
+Agrupamiento GMM (k = 14),formas sin etiqueta,0.6874,NMI (análogo de R² para grupos),D1 prueba,,0.8177,0.4817
+kNN sobre embedding (solo gemelo),gesto en EMG real,-7.2382,pseudo-R² McFadden,D4 UCI prueba,0.3615,,
+Contrastivo + cabezas,gesto,0.8552,pseudo-R² McFadden,D1 prueba,0.8945,,
+Contrastivo + cabezas,pose 6 GDL,0.8043,R²,D1 prueba,,,
+Contrastivo + cabezas,fuerza,0.876,R²,D1 prueba,,,
+Red de formas,reconstrucción 21 puntos,0.8878,R²,D2 prueba,,,
+Red de formas,pose 6 GDL desde 21 puntos,0.9872,R²,D2 prueba,,,
+Estudiante ESP32 (destilado),gesto,0.8167,pseudo-R² McFadden,D1 prueba,0.8576,,
+Agente de servos (REINFORCE),pose lograda,0.9967,R²,mano física virtual,,,

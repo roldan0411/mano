@@ -1,0 +1,291 @@
+{
+  "proyecto": "Prótesis mioeléctrica — gemelo digital",
+  "autor": "Roldán Rodríguez — Ing. CCIA",
+  "entorno": {
+    "keras": "3.15.1",
+    "backend": "torch",
+    "torch": "2.14.1+cu126",
+    "gpu": "NVIDIA GeForce RTX 4050 Laptop GPU"
+  },
+  "datasets": {
+    "D1": {
+      "version": "D1-1.0",
+      "semilla": 42,
+      "n_personas": 160,
+      "rondas": 3,
+      "gestos": [
+        "reposo",
+        "abierta",
+        "puno",
+        "pinza",
+        "senalar",
+        "flexion",
+        "extension"
+      ],
+      "dof": [
+        "pulgar",
+        "indice",
+        "medio",
+        "anular",
+        "menique",
+        "muneca"
+      ],
+      "fs": 1000,
+      "ventana": 200,
+      "paso": 100,
+      "canales": 2,
+      "fuente": "gemelo digital (simulador.py)",
+      "vistas": "x_a y x_b: misma contracción, distinto sensor",
+      "autor": "Roldán Rodríguez — Ing. CCIA",
+      "n": 80640,
+      "hash": "5ed4a4a8ad708c2f",
+      "campos": [
+        "caracteristicas",
+        "fuerza",
+        "gesto",
+        "intensidad",
+        "nivel",
+        "persona",
+        "pose",
+        "progreso",
+        "repeticion",
+        "split",
+        "transicion",
+        "ventana_idx",
+        "x_a",
+        "x_b"
+      ]
+    },
+    "D2": {
+      "version": "D2-1.0",
+      "semilla": 43,
+      "n_manos": 600,
+      "gestos": [
+        "reposo",
+        "abierta",
+        "puno",
+        "pinza",
+        "senalar",
+        "flexion",
+        "extension"
+      ],
+      "dof": [
+        "pulgar",
+        "indice",
+        "medio",
+        "anular",
+        "menique",
+        "muneca"
+      ],
+      "puntos": 21,
+      "topologia": "MediaPipe Hands",
+      "normalizacion": "origen muñeca, escala |p9 - p0|, sin quitar rotación",
+      "fuente": "cinemática del gemelo digital",
+      "autor": "Roldán Rodríguez — Ing. CCIA",
+      "n": 60000,
+      "hash": "ad0f468f1b703fb4",
+      "campos": [
+        "amplitud",
+        "dof",
+        "gesto",
+        "landmarks",
+        "mezcla",
+        "persona",
+        "split"
+      ]
+    },
+    "D4": {
+      "version": "D4-UCI-1.0",
+      "fuente": "UCI EMG data for gestures (id 481)",
+      "url": "https://archive.ics.uci.edu/static/public/481/emg+data+for+gestures.zip",
+      "licencia": "CC BY 4.0",
+      "cita": "Lobov S. et al. Latent Factors Limiting the Performance of sEMG-Interfaces. Sensors 2018;18(4):1122",
+      "gestos": [
+        "reposo",
+        "abierta",
+        "puno",
+        "pinza",
+        "senalar",
+        "flexion",
+        "extension"
+      ],
+      "gesto_-1": "sin marcar o gesto que la mano no tiene",
+      "paso_ms": 50,
+      "cuentas_por_volt": 1316683.752417795,
+      "autor": "Roldán Rodríguez — Ing. CCIA",
+      "n": 71013,
+      "hash": "435bb75fd738e2b7",
+      "campos": [
+        "caracteristicas",
+        "clase_original",
+        "gesto",
+        "persona",
+        "repeticion",
+        "split",
+        "ventana_idx",
+        "x_a"
+      ]
+    },
+    "D3": null
+  },
+  "resumen_r2": [
+    {
+      "modelo": "Red actual 8-32-16-7",
+      "tarea": "gesto",
+      "R²": 0.8173,
+      "tipo de R²": "pseudo-R² McFadden",
+      "datos": "D1 prueba",
+      "precision": 0.8581
+    },
+    {
+      "modelo": "Codificador contrastivo (sonda lineal)",
+      "tarea": "pose 6 GDL",
+      "R²": 0.5681,
+      "tipo de R²": "R² (Ridge sobre embedding)",
+      "datos": "D1 validación"
+    },
+    {
+      "modelo": "Codificador contrastivo (sonda logística)",
+      "tarea": "gesto",
+      "R²": 0.7989,
+      "tipo de R²": "pseudo-R² McFadden",
+      "datos": "D1 validación",
+      "precision": 0.8375
+    },
+    {
+      "modelo": "Agrupamiento GMM (k = 14)",
+      "tarea": "formas sin etiqueta",
+      "R²": 0.6874,
+      "tipo de R²": "NMI (análogo de R² para grupos)",
+      "datos": "D1 prueba",
+      "pureza": 0.8177,
+      "ari": 0.4817
+    },
+    {
+      "modelo": "kNN sobre embedding (solo gemelo)",
+      "tarea": "gesto en EMG real",
+      "R²": -7.2382,
+      "tipo de R²": "pseudo-R² McFadden",
+      "datos": "D4 UCI prueba",
+      "precision": 0.3615
+    },
+    {
+      "modelo": "Contrastivo + cabezas",
+      "tarea": "gesto",
+      "R²": 0.8552,
+      "tipo de R²": "pseudo-R² McFadden",
+      "datos": "D1 prueba",
+      "precision": 0.8945
+    },
+    {
+      "modelo": "Contrastivo + cabezas",
+      "tarea": "pose 6 GDL",
+      "R²": 0.8043,
+      "tipo de R²": "R²",
+      "datos": "D1 prueba"
+    },
+    {
+      "modelo": "Contrastivo + cabezas",
+      "tarea": "fuerza",
+      "R²": 0.876,
+      "tipo de R²": "R²",
+      "datos": "D1 prueba"
+    },
+    {
+      "modelo": "Red de formas",
+      "tarea": "reconstrucción 21 puntos",
+      "R²": 0.8878,
+      "tipo de R²": "R²",
+      "datos": "D2 prueba"
+    },
+    {
+      "modelo": "Red de formas",
+      "tarea": "pose 6 GDL desde 21 puntos",
+      "R²": 0.9872,
+      "tipo de R²": "R²",
+      "datos": "D2 prueba"
+    },
+    {
+      "modelo": "Estudiante ESP32 (destilado)",
+      "tarea": "gesto",
+      "R²": 0.8167,
+      "tipo de R²": "pseudo-R² McFadden",
+      "datos": "D1 prueba",
+      "precision": 0.8576
+    },
+    {
+      "modelo": "Agente de servos (REINFORCE)",
+      "tarea": "pose lograda",
+      "R²": 0.9967,
+      "tipo de R²": "R²",
+      "datos": "mano física virtual"
+    }
+  ],
+  "contrastivo": {
+    "fases": {
+      "SimCLR": 15,
+      "SupCon": 15
+    },
+    "lote": 512,
+    "ultima_epoca": {
+      "epoca": 30,
+      "fase": "SupCon (supervisado)",
+      "perdida": 5.175502417304299,
+      "perdida_val": 6.934620380401611,
+      "knn": 0.825,
+      "sonda_logistica": 0.8375,
+      "pseudo_r2": 0.7988838916390741,
+      "r2_pose": 0.5681152813817153,
+      "nmi": 0.7822540335902274,
+      "ari": 0.7059435955892734,
+      "pureza": 0.8235,
+      "silueta": 0.34650135040283203,
+      "alineacion": 0.031463563442230225,
+      "uniformidad": -1.2753738164901733,
+      "segundos": 7.6759350299835205,
+      "knn_real_uci": 0.425
+    },
+    "grupos_bic": 14
+  },
+  "cabezas": {
+    "gesto": {
+      "precision": 0.894510582010582,
+      "f1_macro": 0.8947745353497909,
+      "pseudo_r2": 0.8551636895100141,
+      "recall": {
+        "reposo": 0.9548611111111112,
+        "abierta": 0.9519675925925926,
+        "puno": 0.8738425925925926,
+        "pinza": 0.6805555555555556,
+        "senalar": 0.8113425925925926,
+        "flexion": 0.9994212962962963,
+        "extension": 0.9895833333333334
+      }
+    },
+    "pose": {
+      "r2": 0.8043362093881529,
+      "r2_por_salida": {
+        "pulgar": 0.9637987273777056,
+        "indice": 0.7970823248619763,
+        "medio": 0.6986157392543806,
+        "anular": 0.6998710799845007,
+        "menique": 0.7029751808364393,
+        "muneca": 0.9636742040139149
+      }
+    },
+    "fuerza": {
+      "r2": 0.8760295683378927,
+      "r2_por_salida": {
+        "fuerza": 0.8760295683378927
+      }
+    }
+  },
+  "esp32": {
+    "modelo_red.h": "red actual",
+    "equivalencia_c": {
+      "dif_max": 7.550456104787884e-07,
+      "acuerdo": 1.0
+    }
+  },
+  "semilla": 42
+}
