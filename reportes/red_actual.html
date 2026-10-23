@@ -1,0 +1,271 @@
+<title>Red 8-32-16-7 de la prótesis</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: cabecera con la ficha de la red; debajo, controles a la izquierda y la red viva a la derecha */
+:root {
+  --bg: #f4f6f7; --surface: #ffffff; --fg: #12191d; --muted: #5a6670; --line: #d8dee2;
+  --pos: #2867c6; --neg: #d0602a; --act: #2867c6; --ok: #1d8a52;
+  --font-display: "Archivo", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1417; --surface: #172026; --fg: #e8eef1; --muted: #9aa7b0; --line: #2a353c;
+  --pos: #5a95ec; --neg: #ec8350; --act: #5a95ec; --ok: #3fbf7f; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0f1417; --surface: #172026; --fg: #e8eef1; --muted: #9aa7b0; --line: #2a353c;
+  --pos: #5a95ec; --neg: #ec8350; --act: #5a95ec; --ok: #3fbf7f; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.5 var(--font-display);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 40px; }
+.envoltura { max-width: 1180px; margin: 0 auto; display: grid; gap: 16px; }
+header h1 { margin: 0; font-size: clamp(22px, 3vw, 30px); font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+header p { margin: 4px 0 0; color: var(--muted); max-width: 70ch; }
+.ficha { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.ficha span { font: 500 12.5px var(--font-mono); padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); }
+.ficha b { font-weight: 500; color: var(--pos); }
+.grid { display: grid; gap: 16px; grid-template-columns: 300px minmax(0, 1fr); align-items: start; }
+@media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; min-width: 0; }
+.panel h2 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
+.gestos { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.gestos button, .barra-botones button { font: 500 13px var(--font-display); color: var(--fg); background: var(--bg); border: 1px solid var(--line);
+  border-radius: 8px; padding: 6px 8px; cursor: pointer; text-align: left; }
+.gestos button[aria-pressed="true"] { border-color: var(--pos); color: var(--pos); background: color-mix(in srgb, var(--pos) 10%, var(--surface)); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--pos); outline-offset: 2px; }
+.canal { margin-top: 14px; display: grid; gap: 8px; }
+.canal h3 { margin: 0; font-size: 13px; font-weight: 600; }
+.deslizador { display: grid; grid-template-columns: 44px minmax(0, 1fr) 74px; gap: 8px; align-items: center; font-size: 12.5px; }
+.deslizador label { font: 500 12px var(--font-mono); color: var(--muted); }
+.deslizador output { font: 500 12px var(--font-mono); text-align: right; font-variant-numeric: tabular-nums; }
+input[type=range] { width: 100%; accent-color: var(--pos); }
+.barra-botones { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.lienzo { overflow-x: auto; }
+svg#red { width: 100%; min-width: 560px; height: auto; display: block; }
+.leyenda { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+.leyenda i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+.salida { display: grid; gap: 6px; margin-top: 4px; }
+.fila { display: grid; grid-template-columns: 130px minmax(0, 1fr) 54px; gap: 10px; align-items: center; font-size: 13.5px; }
+.fila .pista { position: relative; height: 16px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+.fila .pista span { position: absolute; inset: 0 auto 0 0; background: color-mix(in srgb, var(--muted) 45%, transparent); border-radius: 4px; transition: width .25s; }
+.fila.gana .pista span { background: var(--pos); }
+.fila.gana { font-weight: 600; }
+.fila output { font: 500 12.5px var(--font-mono); text-align: right; font-variant-numeric: tabular-nums; }
+.umbral { position: absolute; top: -2px; bottom: -2px; width: 0; border-left: 1.5px dashed var(--fg); opacity: .55; }
+.veredicto { margin-top: 12px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); font-size: 14px; }
+.veredicto b { color: var(--ok); }
+.veredicto.duda b { color: var(--neg); }
+#detalle { font-size: 13px; color: var(--muted); margin-top: 10px; min-height: 2.6em; }
+#detalle code { font-family: var(--font-mono); color: var(--fg); }
+.nota { font-size: 12.5px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .fila .pista span { transition: none; } }
+</style>
+
+<div class="envoltura">
+  <header>
+    <h1>Red 8-32-16-7 de la prótesis</h1>
+    <p>La red neuronal que hoy corre en el ESP32 (<code>modelo_red.h</code>), con sus pesos reales. Mueve las 8 características EMG o elige un gesto y mira cómo se activa cada neurona y qué decide la mano.</p>
+    <div class="ficha">
+      <span>parámetros <b id="f-param"></b></span>
+      <span>acierto en personas nuevas <b id="f-acc"></b></span>
+      <span>pseudo-R² <b>0,817</b></span>
+      <span>umbral de confianza <b id="f-umbral"></b></span>
+      <span>una decisión cada <b>100 ms</b></span>
+    </div>
+  </header>
+
+  <div class="grid">
+    <section class="panel" aria-label="Entrada">
+      <h2>Entrada: un gesto típico</h2>
+      <div class="gestos" id="gestos"></div>
+      <div class="canal"><h3>Canal 1 · flexores</h3><div id="canal1"></div></div>
+      <div class="canal"><h3>Canal 2 · extensores</h3><div id="canal2"></div></div>
+      <div class="barra-botones">
+        <button type="button" id="recorrer">▶ Recorrer los 7 gestos</button>
+      </div>
+      <p class="nota">MAV y RMS: amplitud · ZC: cruces por cero · WL: largo de la onda. Ventana de 200 ms, en cuentas del ADC.</p>
+    </section>
+
+    <section class="panel" aria-label="Red neuronal">
+      <h2>La red, capa por capa</h2>
+      <div class="lienzo"><svg id="red" viewBox="0 0 940 560" role="img" aria-label="Red neuronal 8-32-16-7 con sus activaciones"></svg></div>
+      <div class="leyenda">
+        <span><i style="background:var(--pos)"></i>aporte positivo</span>
+        <span><i style="background:var(--neg)"></i>aporte negativo</span>
+        <span>grosor y opacidad = peso × activación · clic en una neurona para aislar sus conexiones</span>
+      </div>
+      <div id="detalle">Clic en una neurona para ver su valor y sus conexiones más fuertes.</div>
+      <h2 style="margin-top:14px">Salida: probabilidad de cada gesto</h2>
+      <div class="salida" id="salida"></div>
+      <div class="veredicto" id="veredicto"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+const RED = {"gestos": ["reposo", "abierta", "puno", "pinza", "senalar", "flexion", "extension"], "nombres": ["Reposo", "Abierta", "Puño", "Pinza", "Señalar", "Flexión muñeca", "Extensión muñeca"], "caracteristicas": ["c1_MAV", "c1_RMS", "c1_ZC", "c1_WL", "c2_MAV", "c2_RMS", "c2_ZC", "c2_WL"], "media": [188.85229, 236.23756, 51.77702, 31612.73633, 158.79062, 198.62431, 57.58036, 28986.36133], "escala": [158.66499, 197.89797, 12.2108, 27074.18076, 137.15126, 170.43537, 11.76613, 24505.45996], "capas": [{"W": [[0.2889, 0.0251, -0.6307, -0.2701, -0.5852, -0.1349, -0.5516, -0.2168, 0.4617, 0.3199, 0.2553, -0.061, 0.1569, -0.3675, 0.0037, 0.5262, 0.1372, 0.0636, -0.0148, -0.6045, 0.3628, -0.5401, -0.2689, -0.4351, 0.0398, -0.155, -0.5632, 0.0913, 0.0544, -0.3108, 0.4484, -0.1746], [0.5221, -0.2778, -0.5726, -0.4441, -0.6408, 0.0116, -0.156, -0.1515, 0.0293, -0.0179, -0.237, 0.2504, 0.202, -0.5834, -0.0408, 0.1342, 0.5598, -0.4107, 0.0447, -0.5523, 0.5425, -0.4647, -0.6484, -0.5056, 0.3537, 0.5276, -0.6596, 0.0522, -0.1323, -0.3061, -0.0306, -0.2048], [0.0153, 0.1904, -0.3253, -0.1731, 0.0325, 0.5944, -0.1529, 0.0056, 0.1994, -0.1347, -0.108, 0.2057, 0.1042, -0.1374, 0.3205, 0.3213, -0.1704, -0.0232, -0.1781, 0.1875, -0.2209, -0.1313, 0.3438, -0.0927, 0.2069, -0.2116, 0.1003, -0.3976, 0.1598, 0.0232, 0.3059, -0.2423], [-0.526, 0.7951, -0.4328, 0.1836, -0.2503, 0.1048, -0.1527, -0.1818, 0.5409, -0.0613, -0.0834, 0.7951, 0.0113, -0.6521, 0.8902, 0.1727, -0.7181, -0.2775, -0.3822, -0.5704, -0.1605, -0.5562, -0.2451, -0.4875, 0.3036, 0.1139, -0.4681, -0.2498, -0.3457, 0.557, -0.309, 0.6299], [0.264, -0.5776, 0.3451, 0.1559, 0.148, 0.0999, 0.3401, 0.3053, -0.275, -0.0216, 0.3262, -0.1185, -0.5659, -0.1645, -0.1401, -0.5335, -0.5134, -0.4358, -0.1133, 0.2127, 0.02, 0.0706, -0.3612, 0.194, 0.3288, -0.1201, 0.6217, -0.5796, 0.0612, -0.7076, -0.7702, -0.8673], [0.3035, -0.2096, 0.7511, 0.2771, 0.6717, 0.2072, -0.1053, 0.3016, 0.3939, 0.398, 0.9177, -0.0096, -0.6993, -0.4463, -0.1468, -0.7957, -0.4842, -0.0961, -0.4321, -0.0557, -0.1667, 0.3011, -0.2379, 0.2161, -0.125, -0.3602, 0.347, -0.3377, -0.1068, -0.6659, -0.6364, -0.5516], [-0.183, -0.1152, 0.1911, -0.0646, -0.0562, 0.317, -0.0871, 0.2609, -0.2713, 0.0997, 0.2216, -0.0745, 0.0716, -0.161, -0.1608, -0.018, 0.0866, 0.1772, -0.4653, 0.1416, 0.0816, -0.1318, -0.3726, -0.0074, 0.0408, 0.31, -0.035, -0.2836, 0.0023, 0.3321, 0.361, 0.0469], [-0.5326, -0.1864, -0.3574, -0.0934, -0.0445, 0.3915, 0.8901, -0.1228, -1.1882, -0.9154, -1.005, -0.4917, -0.0202, 0.2209, -0.3617, 0.2313, 0.5905, 0.6213, -0.4998, -0.041, 1.0257, -0.1074, -0.7069, -0.6009, 0.6317, 0.591, -0.2154, 0.1794, 0.6582, -0.1615, 0.4966, -0.268]], "b": [0.5832, -0.2269, -0.3259, 0.7135, -0.261, 0.1656, 0.5179, 0.6074, 0.3929, 0.3509, 0.4022, 0.3114, 0.4094, 0.3198, 0.013, -0.2211, 0.6538, 0.4552, 0.2758, 0.1814, 0.4837, -0.3154, -0.3623, -0.3495, 0.0595, 0.4223, -0.23, 0.3858, 0.4155, -0.4314, 0.5245, -0.1503], "act": "relu"}, {"W": [[0.0022, 0.1884, -0.3493, 0.124, -0.1021, 0.9185, 0.2679, 0.6922, 0.4633, 0.3581, 0.187, 0.3769, 0.3873, -0.3715, -0.6629, -0.527], [-0.0, 0.2466, -0.4532, 0.0069, 0.0632, -0.4406, 0.433, -0.0188, -0.4247, -0.1827, -0.0515, 0.2963, -0.4562, 0.1469, 0.3511, 0.2961], [-0.0337, -0.1498, -0.0136, 0.7322, 0.3035, -0.4382, -0.1081, 0.1662, -0.6211, -0.4709, 0.419, -0.4702, 0.0607, 0.3945, 0.2746, -0.0806], [0.0101, -0.2276, -0.2697, -0.0911, 0.2333, 0.4456, 0.4258, -0.2855, -0.266, -0.0304, 0.603, -0.1877, 0.5471, -0.0646, 0.3567, 0.1516], [-0.0121, 0.1534, -0.0018, 0.4167, 0.1235, -0.5672, -0.4815, 0.4345, -0.4295, -0.144, 0.5108, -0.4819, -0.1419, 0.0949, 0.2038, -0.2381], [-0.0003, 0.3059, 0.3081, 0.2822, 0.1247, -0.2602, 0.3057, -0.2935, -0.1643, -0.1325, 0.2266, 0.1417, -0.3102, 0.1177, 0.3868, -0.0704], [-0.0266, 0.6276, 0.088, -0.0431, -0.421, -0.3032, 0.0728, -0.1569, 0.2103, 0.3185, 0.1662, 0.5263, 0.0201, -0.0664, 0.0875, 0.3653], [0.0001, -0.1627, -0.1675, -0.2325, -0.1642, 0.4605, 0.3255, 0.1977, -0.3551, -0.0102, 0.7809, -0.0938, 0.5113, 0.1451, -0.1609, 0.0123], [-0.0057, -0.3295, -0.3716, -0.2047, -0.4987, 0.5247, 0.5661, -0.1292, -0.5179, 0.1071, 0.4848, 0.1421, 0.5025, -0.2373, 0.3126, -0.0926], [-0.0149, -0.4365, -0.3513, 0.0118, 0.1581, 0.7042, 0.363, 0.0644, 0.1511, -0.2524, 0.2784, 0.3591, 0.5094, 0.1598, -0.2479, -0.1329], [-0.0002, -1.1157, -0.5581, 0.7894, 0.3414, 0.8334, 0.8272, 0.5661, -0.5025, -0.4247, 1.28, -0.3503, 0.7941, 0.2936, -0.3121, -0.6778], [-0.0016, -0.4228, 0.0978, -0.0456, -0.2724, -0.3434, 0.5512, 0.0465, -0.1656, 0.1069, -0.1166, 0.0384, 0.2281, -0.1451, 0.2186, -0.0583], [-0.0083, 0.0256, 0.2546, -0.4557, 0.1269, -0.1261, 0.4121, 0.0975, 0.43, 0.4667, -0.1896, 0.4422, -0.2756, -0.1708, -0.2201, 0.2806], [0.0075, 0.4263, 0.5517, 0.4059, -0.1388, 0.2203, 0.1443, 0.101, 0.0042, 0.3082, -0.2071, -0.0004, 0.1294, 0.0344, 0.5886, -0.1497], [-0.0, 0.0809, -0.5263, -0.0312, -0.0789, -0.246, 0.4876, -0.141, -0.6675, -0.2381, -0.3326, 0.2619, -0.1583, -0.0976, 0.2922, -0.0464], [-0.001, 0.6317, 0.046, -0.0729, 0.0668, -0.2326, 0.0164, -0.0128, -0.0937, -0.3046, -0.04, 0.6986, 0.0726, 0.0009, -0.2274, 0.4177], [-0.005, 0.7528, 0.6023, -0.3637, -0.2467, 0.735, -0.2955, 0.2634, 1.0166, 0.5216, 0.0175, 0.9166, 0.505, -0.4067, -0.0935, 0.4792], [-0.0008, 0.1347, -0.0577, -0.6546, -0.3699, 0.4702, -0.3496, 0.3163, 0.3179, 0.2823, 0.3173, 0.4467, 0.3792, 0.0902, 0.2463, 0.7634], [-0.0035, -0.3159, 0.0688, 0.2224, 0.3749, 0.2048, 0.0928, 0.2233, 0.3834, -0.1826, -0.1548, 0.1804, -0.0294, 0.148, 0.1578, 0.1102], [-0.0019, 0.4196, 0.2875, 0.3847, 0.1248, -0.1259, 0.0003, 0.1697, 0.1114, 0.0765, 0.3115, -0.2123, 0.1661, 0.1126, 0.3272, -0.0716], [-0.0003, 0.4568, 0.6154, -0.4174, 0.0274, 0.1043, 0.1303, -0.0278, 0.5403, 0.467, -0.6685, 0.3896, 0.3241, 0.0302, -0.1718, -0.1414], [0.0218, 0.3069, 0.0209, 0.5818, 0.3428, -0.236, -0.584, 0.1053, 0.1087, -0.0911, 0.3175, -0.178, -0.2842, 0.0304, 0.2056, 0.2657], [-0.0051, -0.8046, -0.457, 0.1599, 0.763, -0.3777, 0.2073, 0.0502, -0.0494, -0.3331, 0.2402, -0.1618, -0.277, 0.4895, 0.6553, 0.1682], [-0.022, -0.1428, -0.0984, 0.5127, 0.5395, -0.439, -0.2947, 0.4074, -0.1648, -0.4233, 0.028, -0.3258, -0.1029, 0.2561, -0.0017, -0.667], [0.0, -0.1686, 0.3107, -0.2748, -0.102, -0.1292, 0.2523, -0.348, 0.0685, 0.2055, -0.1808, 0.0101, -0.1794, 0.169, 0.1716, -0.4247], [-0.0008, 0.0555, 0.4912, -0.3304, -0.3888, 0.0113, 0.2234, 0.0692, 0.3704, 0.3733, -0.3035, 0.3224, -0.3162, -0.0605, -0.1098, -0.1492], [0.0843, 0.2976, 0.0051, 0.5729, 0.3017, -0.1284, -0.5275, 0.1745, -0.1373, -0.3797, 0.4006, -0.65, -0.0976, 0.0381, 0.3108, -0.4044], [-0.0017, -0.1205, 0.27, -0.1589, 0.2776, -0.1023, 0.0107, 0.3988, 0.3999, 0.3035, -0.203, 0.5151, -0.1522, -0.1762, 0.4649, 0.2365], [-0.0436, 0.1116, 0.5577, -0.3773, -0.0744, 0.394, -0.2424, 0.1284, 0.1913, 0.489, 0.2702, 0.0874, 0.3673, -0.16, 0.411, 0.5615], [-0.0024, 0.1628, -0.2282, 0.0338, 0.1119, -0.776, 0.2259, -0.2174, 0.1055, -0.1809, -0.6204, 0.6491, -0.9248, 0.2417, 0.533, 0.1618], [0.0126, 0.399, 0.6052, -0.4494, -0.3859, 0.2223, 0.4919, 0.0565, 0.489, 0.3133, 0.2745, 0.4727, 0.1688, -0.1634, -0.2516, 0.6465], [-0.0006, 0.0594, -0.0217, -0.0079, 0.4872, -0.572, 0.2137, -0.2128, 0.1378, -0.2301, -0.3417, 0.3875, -0.6242, 0.2147, 0.7878, 0.2501]], "b": [-0.0728, 0.0339, 0.2384, -0.2145, -0.2172, 0.464, 0.3531, 0.0492, 0.229, 0.365, 0.3472, 0.4562, 0.3706, -0.1577, -0.1952, 0.1993], "act": "relu"}, {"W": [[0.0835, -0.3032, -0.19, -0.1445, -0.3738, -0.2327, -0.2695], [-0.465, 0.3293, 1.0676, -0.0937, -1.0601, -0.5493, 0.512], [-0.3947, -0.4388, 1.0629, -0.4761, -0.144, -0.828, 0.6157], [0.4707, 0.8829, -0.1652, -0.8432, -1.0418, -0.2554, -0.2775], [0.7807, 0.4835, -0.9842, 0.0407, -0.4123, -0.6031, -0.8074], [-1.3085, -0.7758, -0.0713, 0.4773, 0.7926, -1.4938, -0.4484], [-0.8422, -0.7759, -0.3284, -0.2651, 0.047, 0.7811, -1.0403], [0.4643, 0.4868, -0.2683, 0.6399, 0.2132, -0.874, 0.0984], [0.3314, -0.955, 0.7549, 0.5386, -0.0512, -0.5501, -0.7609], [-1.0653, -1.487, 0.767, 0.2926, 0.4624, 0.0711, 0.5486], [-0.9518, 0.7936, -1.1409, -0.0566, 0.5128, -1.0028, 0.2745], [-0.501, -1.0189, 0.495, 0.4201, -0.1121, 0.71, -1.299], [-1.6927, -0.1554, -0.2213, 0.0967, 0.7675, -1.1832, 0.3009], [0.6919, 0.5153, -0.97, 0.1522, -0.1978, -0.1888, -0.1946], [0.8418, -0.3585, -0.5897, -1.1052, -0.3191, 0.4092, 0.6357], [-0.1441, -1.3496, -0.0606, 0.5491, -0.627, 0.2306, 0.6048]], "b": [-0.2898, -0.1322, 0.0107, 0.0647, 0.3103, 0.1351, -0.1409], "act": "softmax"}], "presets": {"reposo": [19.510000228881836, 24.389999389648438, 36.0, 3289.0, 21.479999542236328, 26.719999313354492, 41.0, 3859.5], "abierta": [54.65999984741211, 68.37999725341797, 51.0, 9103.0, 299.8500061035156, 375.8999938964844, 54.0, 49296.0], "puno": [366.010009765625, 457.29998779296875, 50.0, 56392.5, 139.5399932861328, 174.25999450683594, 67.0, 27979.0], "pinza": [226.72999572753906, 283.4599914550781, 49.0, 33160.0, 99.62999725341797, 124.36000061035156, 60.0, 18392.5], "senalar": [272.0799865722656, 340.9800109863281, 49.0, 40938.5, 154.5800018310547, 192.7899932861328, 55.0, 25944.5], "flexion": [333.8699951171875, 418.739990234375, 69.0, 69348.0, 55.619998931884766, 69.31999969482422, 63.0, 11368.0], "extension": [52.619998931884766, 65.63999938964844, 62.0, 10259.5, 305.1000061035156, 382.0400085449219, 69.0, 64215.5]}, "rangos": [[14.62, 714.34], [18.28, 883.08], [20.0, 81.0], [2452.39, 125681.51], [14.34, 737.28], [17.93, 914.56], [24.0, 81.0], [2578.0, 123672.35]], "parametros": 935, "precision_estables": 0.859, "umbral": 0.6};
+const NS = "http://www.w3.org/2000/svg";
+const LOG = [true, true, false, true, true, true, false, true];   // MAV, RMS, WL en escala logarítmica
+const fmt = (v, d = 1) => v.toLocaleString("es", {maximumFractionDigits: d, minimumFractionDigits: d});
+document.getElementById("f-param").textContent = RED.parametros;
+document.getElementById("f-acc").textContent = fmt(RED.precision_estables * 100) + " %";
+document.getElementById("f-umbral").textContent = Math.round(RED.umbral * 100) + " %";
+
+// ---------- entrada ----------
+let x = RED.presets.reposo.slice(), gestoActivo = "reposo", seleccion = null;
+const aSlider = (i, v) => { const [lo, hi] = RED.rangos[i]; return LOG[i] ? 1000 * Math.log(v / lo) / Math.log(hi / lo) : 1000 * (v - lo) / (hi - lo); };
+const deSlider = (i, s) => { const [lo, hi] = RED.rangos[i]; return LOG[i] ? lo * Math.pow(hi / lo, s / 1000) : lo + (hi - lo) * s / 1000; };
+const sliders = [];
+RED.caracteristicas.forEach((nombre, i) => {
+  const fila = document.createElement("div"); fila.className = "deslizador";
+  const id = "f" + i;
+  fila.innerHTML = `<label for="${id}">${nombre.split("_")[1]}</label><input type="range" id="${id}" min="0" max="1000" step="1"><output for="${id}"></output>`;
+  document.getElementById(i < 4 ? "canal1" : "canal2").appendChild(fila);
+  const r = fila.querySelector("input"), o = fila.querySelector("output");
+  r.addEventListener("input", () => { x[i] = deSlider(i, +r.value); gestoActivo = null; marcarGesto(); calcular(); });
+  sliders.push({r, o});
+});
+const cajaGestos = document.getElementById("gestos");
+RED.gestos.forEach((g, k) => {
+  const b = document.createElement("button"); b.type = "button"; b.textContent = RED.nombres[k]; b.dataset.g = g;
+  b.addEventListener("click", () => { detenerRecorrido(); ponerGesto(g); });
+  cajaGestos.appendChild(b);
+});
+function marcarGesto() { cajaGestos.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.g === gestoActivo))); }
+function ponerGesto(g) { x = RED.presets[g].slice(); gestoActivo = g; marcarGesto(); calcular(); }
+
+// ---------- red (misma cuenta que el código C del ESP32) ----------
+function adelante(entrada) {
+  const a0 = entrada.map((v, i) => (v - RED.media[i]) / RED.escala[i]);
+  const acts = [a0];
+  let a = a0;
+  RED.capas.forEach((c) => {
+    const z = c.b.map((bj, j) => a.reduce((s, ai, i) => s + ai * c.W[i][j], bj));
+    a = c.act === "relu" ? z.map((v) => Math.max(0, v)) : z;
+    acts.push(a);
+  });
+  const m = Math.max(...a), e = a.map((v) => Math.exp(v - m)), s = e.reduce((p, q) => p + q, 0);
+  return {acts, probs: e.map((v) => v / s)};
+}
+
+// ---------- dibujo ----------
+const svg = document.getElementById("red");
+const TAM = [8, 32, 16, 7], XS = [96, 360, 610, 800], Y0 = 46, Y1 = 528;
+const ys = (n) => Array.from({length: n}, (_, k) => n === 1 ? (Y0 + Y1) / 2 : Y0 + (Y1 - Y0) * (k + 0.5) / n);
+const POS = TAM.map((n, c) => ys(n).map((y) => ({x: XS[c], y})));
+const el = (tag, attrs, padre) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); (padre || svg).appendChild(e); return e; };
+const gLineas = el("g", {}), gNodos = el("g", {}), gTextos = el("g", {});
+const titulos = ["Entrada (8)", "Oculta 1 · 32 ReLU", "Oculta 2 · 16 ReLU", "Salida · softmax"];
+titulos.forEach((t, c) => el("text", {x: XS[c], y: 22, "text-anchor": "middle", "font-size": 13, "font-weight": 600, fill: "var(--fg)", "font-family": "Archivo, sans-serif"}, gTextos).textContent = t);
+el("text", {x: XS[0], y: 38, "text-anchor": "middle", "font-size": 11, fill: "var(--muted)"}, gTextos).textContent = "normalizada (z)";
+const lineas = [];
+for (let c = 0; c < 3; c++) {
+  lineas.push(RED.capas[c].W.map((fila, i) => fila.map((w, j) =>
+    el("line", {x1: POS[c][i].x, y1: POS[c][i].y, x2: POS[c + 1][j].x, y2: POS[c + 1][j].y, "stroke-linecap": "round"}, gLineas))));
+}
+const R = [9, 6.5, 8, 10];
+const nodos = POS.map((col, c) => col.map((p, k) => {
+  const n = el("circle", {cx: p.x, cy: p.y, r: R[c], stroke: "var(--line)", "stroke-width": 1.2, tabindex: 0, role: "button",
+                          "aria-label": c === 0 ? RED.caracteristicas[k] : c === 3 ? RED.nombres[k] : `neurona ${k + 1} de la capa ${c}`}, gNodos);
+  n.style.cursor = "pointer";
+  const elegir = () => { seleccion = seleccion && seleccion[0] === c && seleccion[1] === k ? null : [c, k]; calcular(); };
+  n.addEventListener("click", elegir);
+  n.addEventListener("keydown", (ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); elegir(); } });
+  return n;
+}));
+RED.caracteristicas.forEach((t, i) => el("text", {x: XS[0] - 16, y: POS[0][i].y + 4, "text-anchor": "end", "font-size": 12, fill: "var(--muted)", "font-family": "IBM Plex Mono, monospace"}, gTextos).textContent = t.replace("_", " "));
+const etiquetasSalida = RED.nombres.map((t, k) => el("text", {x: XS[3] + 18, y: POS[3][k].y + 4, "font-size": 13, fill: "var(--fg)"}, gTextos));
+
+function colorNodo(v, c) {
+  if (c === 0) { const t = Math.min(1, Math.abs(v) / 2.5); return `color-mix(in srgb, ${v >= 0 ? "var(--pos)" : "var(--neg)"} ${Math.round(t * 85)}%, var(--surface))`; }
+  return v;
+}
+
+// ---------- cálculo + pintura ----------
+function calcular() {
+  sliders.forEach(({r, o}, i) => { r.value = aSlider(i, x[i]); o.textContent = x[i] >= 1000 ? fmt(x[i], 0) : fmt(x[i], 1); });
+  const {acts, probs} = adelante(x);
+  const gana = probs.indexOf(Math.max(...probs));
+  // nodos
+  acts.forEach((a, c) => {
+    const tope = c === 0 ? 1 : Math.max(1e-6, ...a.map(Math.abs));
+    a.forEach((v, k) => {
+      const n = nodos[c][k];
+      if (c === 0) n.setAttribute("fill", colorNodo(v, 0));
+      else if (c === 3) { const p = probs[k]; n.setAttribute("fill", `color-mix(in srgb, var(--pos) ${Math.round(p * 90)}%, var(--surface))`); }
+      else n.setAttribute("fill", `color-mix(in srgb, var(--act) ${Math.round(Math.min(1, v / tope) * 90)}%, var(--surface))`);
+      const sel = seleccion && seleccion[0] === c && seleccion[1] === k;
+      n.setAttribute("stroke", sel ? "var(--fg)" : (c === 3 && k === gana ? "var(--pos)" : "var(--line)"));
+      n.setAttribute("stroke-width", sel || (c === 3 && k === gana) ? 2.4 : 1.2);
+    });
+  });
+  etiquetasSalida.forEach((t, k) => { t.textContent = `${RED.nombres[k]} ${fmt(probs[k] * 100, 0)} %`; t.setAttribute("font-weight", k === gana ? 700 : 400); });
+  // conexiones: aporte = peso × activación de entrada
+  for (let c = 0; c < 3; c++) {
+    const W = RED.capas[c].W, a = acts[c];
+    let tope = 1e-6;
+    W.forEach((fila, i) => fila.forEach((w) => { tope = Math.max(tope, Math.abs(w * a[i])); }));
+    W.forEach((fila, i) => fila.forEach((w, j) => {
+      const l = lineas[c][i][j], ap = w * a[i], t = Math.abs(ap) / tope;
+      let vis = t;
+      if (seleccion) {
+        const [sc, sk] = seleccion;
+        const toca = (sc === c && sk === i) || (sc === c + 1 && sk === j);
+        vis = toca ? Math.max(0.25, t) : 0.02 * t;
+      }
+      l.setAttribute("stroke", ap >= 0 ? "var(--pos)" : "var(--neg)");
+      l.setAttribute("stroke-opacity", (0.04 + 0.85 * vis).toFixed(3));
+      l.setAttribute("stroke-width", (0.4 + 2.6 * vis).toFixed(2));
+    }));
+  }
+  // salida
+  const caja = document.getElementById("salida");
+  if (!caja.children.length) {
+    RED.nombres.forEach((n) => { const f = document.createElement("div"); f.className = "fila";
+      f.innerHTML = `<span>${n}</span><div class="pista"><span></span><i class="umbral" style="left:${RED.umbral * 100}%"></i></div><output></output>`; caja.appendChild(f); });
+  }
+  [...caja.children].forEach((f, k) => {
+    f.classList.toggle("gana", k === gana);
+    f.querySelector(".pista span").style.width = (probs[k] * 100).toFixed(1) + "%";
+    f.querySelector("output").textContent = fmt(probs[k] * 100, 1) + " %";
+  });
+  const v = document.getElementById("veredicto"), seguro = probs[gana] >= RED.umbral;
+  v.classList.toggle("duda", !seguro);
+  v.innerHTML = seguro
+    ? `La mano hace: <b>${RED.nombres[gana]}</b> (confianza ${fmt(probs[gana] * 100, 0)} %, sobre el umbral de ${Math.round(RED.umbral * 100)} %).`
+    : `Confianza ${fmt(probs[gana] * 100, 0)} % en <b>${RED.nombres[gana]}</b>: está bajo el umbral de ${Math.round(RED.umbral * 100)} %, así que la mano <b>mantiene el gesto anterior</b>.`;
+  // detalle de la neurona elegida
+  const d = document.getElementById("detalle");
+  if (!seleccion) { d.textContent = "Clic en una neurona para ver su valor y sus conexiones más fuertes."; return; }
+  const [c, k] = seleccion;
+  if (c === 0) { d.innerHTML = `Entrada <code>${RED.caracteristicas[k]}</code> = ${fmt(x[k], 1)} cuentas → normalizada <code>${fmt(acts[0][k], 2)}</code> (media ${fmt(RED.media[k], 1)}, escala ${fmt(RED.escala[k], 1)}).`; return; }
+  const W = RED.capas[c - 1].W, a = acts[c - 1];
+  const aportes = W.map((fila, i) => ({i, ap: fila[k] * a[i]})).sort((p, q) => Math.abs(q.ap) - Math.abs(p.ap)).slice(0, 3);
+  const nombreEntrada = (i) => c - 1 === 0 ? RED.caracteristicas[i] : `n${i + 1}`;
+  const nombre = c === 3 ? RED.nombres[k] : `neurona ${k + 1} de la oculta ${c}`;
+  d.innerHTML = `<b>${nombre}</b>: valor <code>${fmt(acts[c][k], 3)}</code>, sesgo <code>${fmt(RED.capas[c - 1].b[k], 3)}</code>. Aportes más fuertes: ` +
+    aportes.map((p) => `<code>${nombreEntrada(p.i)} ${p.ap >= 0 ? "+" : "−"}${fmt(Math.abs(p.ap), 2)}</code>`).join(", ") + ".";
+}
+
+// ---------- recorrido animado por los 7 gestos ----------
+let timer = null;
+const quieto = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+function detenerRecorrido() { if (timer) { clearInterval(timer); timer = null; document.getElementById("recorrer").textContent = "▶ Recorrer los 7 gestos"; } }
+document.getElementById("recorrer").addEventListener("click", () => {
+  if (timer) return detenerRecorrido();
+  let k = Math.max(0, RED.gestos.indexOf(gestoActivo)), t = 0, desde = x.slice();
+  document.getElementById("recorrer").textContent = "⏸ Detener";
+  timer = setInterval(() => {
+    t += quieto ? 1 : 0.06;
+    const hacia = RED.presets[RED.gestos[(k + 1) % 7]];
+    const s = Math.min(1, t), e = s * s * (3 - 2 * s);
+    x = desde.map((v, i) => LOG[i] ? v * Math.pow(hacia[i] / v, e) : v + (hacia[i] - v) * e);
+    gestoActivo = null; marcarGesto(); calcular();
+    if (t >= 1.6) { k = (k + 1) % 7; t = 0; desde = x.slice(); gestoActivo = RED.gestos[k]; marcarGesto(); }
+  }, 50);
+});
+
+ponerGesto("puno");
+</script>

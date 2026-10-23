@@ -6,10 +6,30 @@ Mano impresa con 5 servos de dedos y un servo de muñeca, controlada por un ESP3
 
 El **gemelo digital** simula todo el sistema (10 músculos, electrodos, circuito, ADC, servos, tendones) para que la IA aprenda sin persona ni hardware; lo aprendido se pasa al ESP32.
 
+## Aplicación de escritorio: el gemelo que entrena sin parar
+
+Doble clic en **`Gemelo de la mano.bat`** (o `python app_gemelo.py` con el entorno del proyecto). Es una ventana nativa de Windows (Qt + OpenGL); el entrenamiento corre en la GPU en un proceso aparte.
+
+Mientras la ventana está abierta:
+
+1. Procesos de simulación generan **personas, sesiones y calibraciones** sin parar (electrodos que se mueven en cada sesión, desfase continuo, AD620 que puede saturarse) y **guardan cada lote en disco**.
+2. **10 manos** (redes del tamaño del ESP32, cada una con su genoma) entrenan por turnos con todo lo acumulado.
+3. Rinden el mismo **examen** (personas que ninguna vio). Las 3 peores copian a una de las 3 mejores y mutan; cada 12 generaciones entra una mano nueva al azar.
+4. Si la mejor supera a la campeona, se guarda como **campeona**: modelo `.keras` y `.h5`, `modelo_red_calibrado.h` para el ESP32, ficha y **fotos de sus 7 gestos** con la mano InMoov.
+
+Pestañas: **Competencia de manos** (las 10 manos InMoov en 3D moviéndose en tiempo real), **Red neuronal** (pesos y activaciones en vivo), **Gemelo y electrodos** (corte del antebrazo, electrodos desplazados, señal en cada etapa del amplificador, calibración), **Campeonas** (galería de fotos) y **Datos guardados**.
+
+Todo se guarda en `%USERPROFILE%\gemelo_mano\motor\` (base SQLite, lotes, examen, población y campeonas) y al reabrir continúa donde quedó. Con el cargador desconectado o poca RAM, el motor se pausa solo.
+
+La entrada de estas redes son las 8 características **calibradas** (relativas a 20 s de calibración al ponerse los electrodos) de las 3 últimas ventanas: 24 valores. El firmware actual usa 8 sin calibrar, así que `modelo_red_calibrado.h` necesita la actualización del firmware con calibración.
+
 ## Estructura
 
 ```
 notebooks/gemelo_mano.ipynb   ← EL proceso completo, en orden ("Ejecutar todo")
+app_gemelo.py                 ← APLICACIÓN DE ESCRITORIO (doble clic en "Gemelo de la mano.bat")
+gemelo/motor/                 ← motor continuo: gemelo v2, almacén, población de 10 manos, fotos
+gemelo/escritorio/            ← ventana Qt: manos 3D (OpenGL), red, antebrazo, osciloscopios
 gemelo/                       ← módulos que usa el notebook
   datos_emg.py                  D1: EMG sintético con dos vistas físicas por ventana
   datos_poses.py                D2: poses de mano de 21 puntos (topología MediaPipe)

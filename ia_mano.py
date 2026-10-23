@@ -258,7 +258,7 @@ def _arr(v):
 
 def exportar_red_c(modelo, ruta):
     red = RedNumpy(modelo)
-    tam = [NUM_CARACTERISTICAS] + [W.shape[1] for W, _, _ in red.capas]
+    tam = [red.capas[0][0].shape[0]] + [W.shape[1] for W, _, _ in red.capas]   # 8 o 24 (con calibración y contexto)
     L = ["/*",
          f" * modelo_red.h — Red neuronal {'-'.join(map(str, tam))} exportada desde Keras (.h5)",
          " * Generado automáticamente. NO editar a mano.",
@@ -270,7 +270,7 @@ def exportar_red_c(modelo, ruta):
          f"#define VENTANA {VENTANA}",
          f"#define PASO {PASO}",
          f"#define UMBRAL_ZC {UMBRAL_ZC}",
-         f"#define NUM_CARACTERISTICAS {NUM_CARACTERISTICAS}",
+         f"#define NUM_CARACTERISTICAS {tam[0]}",
          f"#define NUM_CLASES {NUM_GESTOS}",
          "",
          "static const char* const NOMBRES_GESTOS[NUM_CLASES] = {",
