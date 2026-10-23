@@ -96,8 +96,8 @@ class EscenaManos(gl.GLViewWidget):
     def __init__(self, n=10, parent=None):
         super().__init__(parent)
         self.setBackgroundColor((22, 28, 34))
-        self.setCameraPosition(distance=1650, elevation=6, azimuth=90)
-        self.opts["center"] = QtGui.QVector3D(0, 0, -20)
+        self.setCameraPosition(distance=1850, elevation=6, azimuth=90)
+        self.opts["center"] = QtGui.QVector3D(0, 0, 45)              # deja ver las etiquetas de la fila de arriba
         piezas, plantilla = cargar_piezas()
         self.reales, self.objetivos, self.etiquetas, self.posiciones = [], [], [], []
         fuente = QtGui.QFont("Segoe UI", 10)

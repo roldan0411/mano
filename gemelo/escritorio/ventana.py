@@ -63,7 +63,6 @@ def panel(titulo=None):
         t = QtWidgets.QLabel(titulo.upper())
         t.setObjectName("titulo")
         t.setWordWrap(True)                                     # los títulos largos no ensanchan la ventana
-        t.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Preferred)
         lay.addWidget(t)
     return f, lay
 
@@ -124,11 +123,13 @@ class VistaCompetencia(QtWidgets.QWidget):
         self.objetivo.setStyleSheet("font-size: 14px;")
         l.addWidget(self.objetivo)
         self.escena = EscenaManos()
+        self.escena.setMinimumHeight(380)
         l.addWidget(self.escena, 1)
         lay.addWidget(f, 0, 0)
         f, l = panel("Puntaje por generación · mejor (azul) y promedio (gris)")
         self.curva = pg.PlotWidget()
-        self.curva.setMinimumHeight(150)
+        self.curva.setMinimumHeight(130)
+        self.curva.setMaximumHeight(210)
         self.curva.showGrid(y=True, alpha=0.15)
         self.l_mejor = self.curva.plot(pen=pg.mkPen(C["acento"], width=2))
         self.l_media = self.curva.plot(pen=pg.mkPen(C["muted"], width=1.5))
