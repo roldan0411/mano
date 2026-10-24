@@ -34,10 +34,12 @@ def main():
     from gemelo.escritorio.lanzador import correr_motor
     from gemelo.escritorio.ventana import QSS, Ventana
 
-    ctx = mp.get_context("spawn")
-    salida, entrada = ctx.Queue(maxsize=6), ctx.Queue()
-    motor = ctx.Process(target=correr_motor, args=(salida, entrada), name="motor-gemelo", daemon=False)
-    motor.start()
+    solo_libre = "--libre" in sys.argv                # solo la mano bebé, sin la competencia ni la GPU
+    if not solo_libre:
+        ctx = mp.get_context("spawn")
+        salida, entrada = ctx.Queue(maxsize=6), ctx.Queue()
+        motor = ctx.Process(target=correr_motor, args=(salida, entrada), name="motor-gemelo", daemon=False)
+        motor.start()
 
     if sys.platform == "win32":                     # la barra de tareas muestra el ícono propio, no el de Python
         import ctypes
@@ -48,10 +50,14 @@ def main():
     app.setStyle("Fusion")
     app.setStyleSheet(QSS)
     app.setFont(QtGui.QFont("Segoe UI", 10))
-    ventana = Ventana(salida, entrada, motor)
+    if solo_libre:
+        from gemelo.escritorio.libre import VentanaLibre
+        ventana = VentanaLibre(solo=True)
+    else:
+        ventana = Ventana(salida, entrada, motor)
     ventana.show()
     codigo = app.exec()
-    if motor.is_alive():
+    if not solo_libre and motor.is_alive():
         motor.terminate()
     sys.exit(codigo)
 

@@ -801,6 +801,10 @@ class Ventana(QtWidgets.QMainWindow):
         self.mensaje.setStyleSheet(f"color: {C['muted']};")
         self.mensaje.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Preferred)   # no ensancha la ventana
         cab.addWidget(self.mensaje, 1)
+        self.b_libre = QtWidgets.QPushButton("Entrenamiento libre (mano bebé)")
+        self.b_libre.setObjectName("primario")
+        self.b_libre.clicked.connect(self._abrir_libre)
+        cab.addWidget(self.b_libre)
         self.b_pausa = QtWidgets.QPushButton("⏸ Pausar")
         self.b_pausa.clicked.connect(self._pausa)
         cab.addWidget(self.b_pausa)
@@ -831,6 +835,14 @@ class Ventana(QtWidgets.QMainWindow):
         self.tabs.setCurrentIndex(k)
         QtCore.QTimer.singleShot(5000, lambda: (self.grab().save(str(destino / f"pestana_{k}.png")),
                                                 setattr(self, "_capturas", (destino, k + 1)), self._capturar()))
+
+    def _abrir_libre(self):
+        from .libre import VentanaLibre
+        if getattr(self, "libre", None) is None or not self.libre.isVisible():
+            self.libre = VentanaLibre()
+        self.libre.show()
+        self.libre.raise_()
+        self.libre.activateWindow()
 
     def _ver_red(self, k):
         self.vred.seguir.setChecked(False)
@@ -904,6 +916,8 @@ class Ventana(QtWidgets.QMainWindow):
             QtWidgets.QMessageBox.critical(self, "El motor se detuvo", "El proceso de entrenamiento terminó inesperadamente.")
 
     def closeEvent(self, ev):
+        if getattr(self, "libre", None) is not None and self.libre.isVisible():
+            self.libre.close()
         if self.proceso.is_alive():
             self.cerrando = True
             self.entrada.put({"cmd": "detener"})

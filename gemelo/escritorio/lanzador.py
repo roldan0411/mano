@@ -5,3 +5,9 @@ def correr_motor(salida, entrada):
     from gemelo.motor.servicio import proceso
 
     proceso(salida, entrada)
+
+
+def correr_bebe(salida, entrada):
+    from gemelo.libre.bebe import proceso
+
+    proceso(salida, entrada)

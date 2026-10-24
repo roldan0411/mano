@@ -23,13 +23,30 @@ Todo se guarda en `%USERPROFILE%\gemelo_mano\motor\` (base SQLite, lotes, examen
 
 La entrada de estas redes son las 8 características **calibradas** (relativas a 20 s de calibración al ponerse los electrodos) de las 3 últimas ventanas: 24 valores. El firmware actual usa 8 sin calibrar, así que `modelo_red_calibrado.h` necesita la actualización del firmware con calibración.
 
+## Mano bebé: aprende de cero mirando manos de personas en internet
+
+Acceso directo **"Mano bebé (entrenamiento libre)"** en el escritorio, o el botón "Entrenamiento libre" de la aplicación (`app_gemelo.py --libre` la abre sola, sin GPU).
+
+Nadie le enseña gestos. La mano controla sus **10 músculos** (no gestos) y una biomecánica que no conoce los traduce en dedos y muñeca, con los acoples reales (los tendones flexores mueven varios dedos a la vez):
+
+1. **Balbuceo**: activa músculos al azar y aprende cómo responde su cuerpo.
+2. **Imita lo que ve en internet**: mira la mano de una persona real de **HaGRID v2** (33 gestos cotidianos: "llamar", "ok", "rock", "me gusta"…), la traduce a "cuánto se dobla cada dedo" e intenta imitarla. Elige con curiosidad: practica más lo que está mejorando.
+3. Cada gesto que logra imitar es un **descubrimiento** con foto (la mano de la persona y la suya). Los que no logra tras muchos intentos los marca como **imposibles para su anatomía** (necesitan dedos independientes).
+
+Su cerebro: un modelo inverso (pose → músculos) y uno directo (músculos → pose) que aprenden en línea; se reporta el **R² de la imitación**. Corre en CPU y guarda lo aprendido en `%USERPROFILE%\gemelo_mano\motorebe\`.
+
+En una prueba de 15.000 intentos aprendió 15 gestos de internet (alto, palma, cuatro, me gusta, ok, puño, tomar una foto…) y reconoció 18 como imposibles para su anatomía (rock, paz, tres, llamar, dedo medio…): una pista concreta de qué gestos exigen tendones independientes en la prótesis.
+
+Datos: [HaGRID v2](https://github.com/hukenovs/hagrid) — Kapitanov et al., *HaGRID – HAnd Gesture Recognition Image Dataset*, WACV 2024, licencia CC BY-SA 4.0. Solo se usan los 21 puntos de cada mano (no las fotos), descargados parcialmente (600 manos por gesto).
+
 ## Estructura
 
 ```
 notebooks/gemelo_mano.ipynb   ← EL proceso completo, en orden ("Ejecutar todo")
 app_gemelo.py                 ← APLICACIÓN DE ESCRITORIO (doble clic en "Gemelo de la mano.bat")
 gemelo/motor/                 ← motor continuo: gemelo v2, almacén, población de 10 manos, fotos
-gemelo/escritorio/            ← ventana Qt: manos 3D (OpenGL), red, antebrazo, osciloscopios
+gemelo/escritorio/            ← ventana Qt: manos 3D (OpenGL), red, antebrazo, osciloscopios, mano bebé
+gemelo/libre/                 ← mano bebé: cuerpo (10 músculos), cerebro que aprende, manos de internet (HaGRID)
 gemelo/                       ← módulos que usa el notebook
   datos_emg.py                  D1: EMG sintético con dos vistas físicas por ventana
   datos_poses.py                D2: poses de mano de 21 puntos (topología MediaPipe)
