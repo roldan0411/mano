@@ -325,7 +325,7 @@ class VentanaLibre(QtWidgets.QMainWindow):
         self.galeria.setFixedHeight(150)
         self.galeria.setMovement(QtWidgets.QListView.Static)
         l.addWidget(self.galeria)
-        f.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
+        f.setMaximumHeight(205)                         # la galería no se come el espacio de la mano
         v.addWidget(f, 0)
 
         self.items_hito, self.pausado, self.nombres_musculos = {}, False, []
