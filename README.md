@@ -23,6 +23,20 @@ Todo se guarda en `%USERPROFILE%\gemelo_mano\motor\` (base SQLite, lotes, examen
 
 La entrada de estas redes son las 8 características **calibradas** (relativas a 20 s de calibración al ponerse los electrodos) de las 3 últimas ventanas: 24 valores. El firmware actual usa 8 sin calibrar, así que `modelo_red_calibrado.h` necesita la actualización del firmware con calibración.
 
+## Neuroevolución: 150 manos aprenden desde cero a seguir a una persona
+
+Acceso directo **"Neuroevolución de la mano"** en el escritorio, o el botón "Neuroevolución" de la aplicación (`app_gemelo.py --neuro` la abre sola; corre en CPU).
+
+Como los carros que aprenden a manejar con algoritmos genéticos, pero la pista es **una persona del gemelo** que se pone los electrodos, se calibra y hace 21 gestos al azar (~29 s). Las manos solo escuchan los 2 canales EMG (las mismas 24 entradas calibradas del ESP32) y tienen que hacer lo que la persona quiere. Si hacen el gesto equivocado medio segundo seguido, **chocan** y se apagan.
+
+- **NEAT** (Stanley y Miikkulainen, 2002): nadie las entrena con gradiente. Nacen casi vacías (cada gesto conectado a 4 entradas al azar) y la evolución cambia pesos, agrega conexiones y **neuronas nuevas**: la red crece. Se agrupan en **especies** por parecido; las especies que no mejoran en 20 generaciones se extinguen.
+- **Fitness**: segundos sin chocar + 30 × acierto, en 6 personas distintas por generación (las pistas se renuevan: no pueden aprenderlas de memoria).
+- **Examen** de cada generación: 8 personas que ninguna mano vio. Siempre se ven el acierto, el **pseudo-R²** de McFadden y el **R² de la pose** de los dedos.
+- La ventana muestra 30 de las 150 manos (de la mejor a la peor, color = especie), la pista con la señal EMG y dónde chocó cada una, la red de la mejor con sus neuronas encendiéndose, y las curvas de aguante, acierto, R² y especies. Se puede ver cada generación completa (×1, ×2, ×4) o dejarla evolucionar rápido.
+- Cada **campeón** (mejor acierto en el examen) se guarda con su red como código C (`red_neat.h`, función `neat_predecir`) para el ESP32. Todo queda en `%USERPROFILE%\gemelo_mano\motor\neuro\` y al reabrir sigue; "Volver a empezar" guarda la población como respaldo y nace de cero.
+
+En una prueba de 300 generaciones (unos 60 s sin ventana) pasó de 35 % a 89 % de acierto en personas nuevas, de aguantar 1 s a 24 s de los 29 de la pista, y R² de la pose 0,785. Como referencia, un clasificador lineal entrenado con gradiente llega a 96 % con los mismos datos: la evolución todavía tiene margen.
+
 ## Mano bebé: aprende sola, desde cero, qué puede hacer su cuerpo
 
 Acceso directo **"Mano bebé (entrenamiento libre)"** en el escritorio, o el botón "Entrenamiento libre" de la aplicación (`app_gemelo.py --libre` la abre sola, sin GPU).
@@ -47,7 +61,8 @@ Datos del espejo: [HaGRID v2](https://github.com/hukenovs/hagrid) — Kapitanov 
 notebooks/gemelo_mano.ipynb   ← EL proceso completo, en orden ("Ejecutar todo")
 app_gemelo.py                 ← APLICACIÓN DE ESCRITORIO (doble clic en "Gemelo de la mano.bat")
 gemelo/motor/                 ← motor continuo: gemelo v2, almacén, población de 10 manos, fotos
-gemelo/escritorio/            ← ventana Qt: manos 3D (OpenGL), red, antebrazo, osciloscopios, mano bebé
+gemelo/escritorio/            ← ventanas Qt: manos 3D (OpenGL), red, antebrazo, osciloscopios, mano bebé, neuroevolución
+gemelo/neuro/                 ← neuroevolución: NEAT, la pista (persona del gemelo), exportación a C
 gemelo/libre/                 ← mano bebé: cuerpo (10 músculos), cerebro que explora solo, espejo de internet (HaGRID)
 gemelo/                       ← módulos que usa el notebook
   datos_emg.py                  D1: EMG sintético con dos vistas físicas por ventana

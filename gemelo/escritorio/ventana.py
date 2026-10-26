@@ -805,6 +805,10 @@ class Ventana(QtWidgets.QMainWindow):
         self.b_libre.setObjectName("primario")
         self.b_libre.clicked.connect(self._abrir_libre)
         cab.addWidget(self.b_libre)
+        self.b_neuro = QtWidgets.QPushButton("Neuroevolución")
+        self.b_neuro.setObjectName("primario")
+        self.b_neuro.clicked.connect(self._abrir_neuro)
+        cab.addWidget(self.b_neuro)
         self.b_pausa = QtWidgets.QPushButton("⏸ Pausar")
         self.b_pausa.clicked.connect(self._pausa)
         cab.addWidget(self.b_pausa)
@@ -843,6 +847,14 @@ class Ventana(QtWidgets.QMainWindow):
         self.libre.show()
         self.libre.raise_()
         self.libre.activateWindow()
+
+    def _abrir_neuro(self):
+        from .neuro import VentanaNeuro
+        if getattr(self, "neuro", None) is None or not self.neuro.isVisible():
+            self.neuro = VentanaNeuro()
+        self.neuro.show()
+        self.neuro.raise_()
+        self.neuro.activateWindow()
 
     def _ver_red(self, k):
         self.vred.seguir.setChecked(False)
@@ -916,8 +928,9 @@ class Ventana(QtWidgets.QMainWindow):
             QtWidgets.QMessageBox.critical(self, "El motor se detuvo", "El proceso de entrenamiento terminó inesperadamente.")
 
     def closeEvent(self, ev):
-        if getattr(self, "libre", None) is not None and self.libre.isVisible():
-            self.libre.close()
+        for hija in (getattr(self, "libre", None), getattr(self, "neuro", None)):
+            if hija is not None and hija.isVisible():
+                hija.close()
         if self.proceso.is_alive():
             self.cerrando = True
             self.entrada.put({"cmd": "detener"})

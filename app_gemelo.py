@@ -35,7 +35,8 @@ def main():
     from gemelo.escritorio.ventana import QSS, Ventana
 
     solo_libre = "--libre" in sys.argv                # solo la mano bebé, sin la competencia ni la GPU
-    if not solo_libre:
+    solo_neuro = "--neuro" in sys.argv                # solo la neuroevolución (CPU)
+    if not (solo_libre or solo_neuro):
         ctx = mp.get_context("spawn")
         salida, entrada = ctx.Queue(maxsize=6), ctx.Queue()
         motor = ctx.Process(target=correr_motor, args=(salida, entrada), name="motor-gemelo", daemon=False)
@@ -53,11 +54,14 @@ def main():
     if solo_libre:
         from gemelo.escritorio.libre import VentanaLibre
         ventana = VentanaLibre(solo=True)
+    elif solo_neuro:
+        from gemelo.escritorio.neuro import VentanaNeuro
+        ventana = VentanaNeuro(solo=True)
     else:
         ventana = Ventana(salida, entrada, motor)
     ventana.show()
     codigo = app.exec()
-    if not solo_libre and motor.is_alive():
+    if not (solo_libre or solo_neuro) and motor.is_alive():
         motor.terminate()
     sys.exit(codigo)
 
