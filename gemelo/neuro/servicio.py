@@ -228,11 +228,12 @@ class Neuro:
         m = self.rendir_examen(mejor)
         if pob.campeon_metricas is None or m["acierto"] > pob.campeon_metricas["acierto"] + MEJORA_CAMPEON:
             self._coronar(mejor, m)
-        if mejor.especie != getattr(pob, "especie_lider", None):
+        lideres = pob.__dict__.setdefault("lideres", set())
+        if mejor.especie not in lideres:                          # solo la primera vez que una especie llega arriba
             if pob.gen:
-                pob.anotar(f"La especie {mejor.especie} toma la delantera: su mejor red tiene {len(mejor.ocultas)} "
-                           f"neuronas ocultas y {mejor.n_conexiones} conexiones")
-            pob.especie_lider = mejor.especie
+                pob.anotar(f"La especie {mejor.especie} llega por primera vez al primer lugar: su mejor red tiene "
+                           f"{len(mejor.ocultas)} neuronas ocultas y {mejor.n_conexiones} conexiones")
+            lideres.add(mejor.especie)
         # 30 manos que representan a toda la población: la mejor y una de cada tramo del ranking
         elegidas = np.unique(np.linspace(0, len(orden) - 1, N_VISIBLES).round().astype(int))
         idx = orden[elegidas]
