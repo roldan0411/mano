@@ -1,25 +1,33 @@
 """
-La mano bebé: empieza de cero y aprende mirando manos de personas en internet
-=============================================================================
+La mano bebé: aprende sola qué es capaz de hacer su cuerpo
+==========================================================
 
-Nadie le enseña gestos. Como un bebé:
+Nadie le da gestos, listas ni metas. Como un bebé:
 
   1. BALBUCEO   activa sus 10 músculos al azar y mira dónde quedan sus dedos:
                 así conoce su propio cuerpo.
-  2. IMITA      mira la mano de una persona real de internet (HaGRID v2: 33
-                gestos cotidianos como "llamar", "ok", "rock", "me gusta") e
-                intenta hacer lo mismo. Elige con curiosidad: practica más los
-                gestos en los que está mejorando.
-  3. DOMINA     cuando ya imita bien casi todo lo que puede, afina.
+  2. EXPLORA    se pone sus propias metas y decide sola cómo aprender:
+                  inventar    se imagina una pose cualquiera e intenta hacerla
+                  ir más allá parte de algo que ya sabe y lo lleva más lejos
+                  practicar   repite algo nuevo que le salió, hasta dominarlo
+                  balbucear   vuelve a mover músculos al azar
+                Prefiere la estrategia que más le está enseñando en ese momento
+                (curiosidad: novedad + progreso), y eso cambia con el tiempo.
+
+Una HABILIDAD es una pose que descubrió ella misma y que ya sabe repetir a
+voluntad (3 veces seguidas). El repertorio no tiene tope: cuando ya no
+encuentra nada nuevo, empieza a distinguir detalles más finos (sube de
+"finura") y sigue descubriendo.
+
+Internet es un espejo, no una lista de tareas: de cada cosa que hace mira si
+alguna persona real hace algo parecido (HaGRID v2, 19.800 manos) y lo anota.
 
 Su cerebro son dos redes que aprenden en línea, intento a intento:
-  modelo inverso  pose deseada → qué músculos activar
+  modelo inverso  pose que se propone → qué músculos activar
   modelo directo  músculos → qué pose va a salir
-
-Un DESCUBRIMIENTO es la primera vez que imita bien un gesto de internet
-(foto: la mano de la persona y la suya). Si tras muchos intentos no lo logra,
-lo reconoce como imposible para su anatomía (por ejemplo, "rock" necesita
-mover el meñique solo, y sus tendones no lo permiten).
+R² del control: pose lograda frente a la que se propuso (300 poses de examen
+que su cuerpo puede hacer). R² del cuerpo: lo que el modelo directo predice
+frente a lo que pasa.
 
 Corre en la CPU (NumPy + scikit-learn): no le quita la GPU a la competencia.
 """
@@ -28,7 +36,6 @@ import os
 
 os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 
-import collections
 import pickle
 import queue
 import threading
@@ -46,14 +53,18 @@ from . import cuerpo, internet
 
 warnings.filterwarnings("ignore", category=ConvergenceWarning)
 RAIZ = config.RAIZ_DATOS / "motor" / "bebe"
-VERSION = 2
-FIN_BALBUCEO = 300          # ~3 minutos en tiempo real: luego empieza a mirar internet
+VERSION = 3
+FIN_BALBUCEO = 300          # ~3 minutos en tiempo real
 MEMORIA = 30_000
-APRENDIDO, IMPOSIBLE, MIN_INTENTOS = 0.13, 0.26, 80
+ESTRATEGIAS = ["inventar", "frontera", "practicar", "balbucear"]
+RADIO_INICIAL, RADIO_MIN, FINURA = 0.35, 0.03, 0.85     # qué tan distinta tiene que ser una pose para ser "nueva"
+SATURACION = 1500           # intentos sin nada nuevo antes de afinar la mirada
+REPETIR, MAX_PRACTICA, MAX_CANDIDATAS = 3, 20, 24
+FOTOS_MAX = 400             # después, solo fotos de lo que también hacen personas en internet
 
 
 class Bebe:
-    def __init__(self, red=None, semilla=None):
+    def __init__(self, semilla=None):
         self.version = VERSION
         self.semilla = int(time.time()) if semilla is None else semilla
         self.rng = np.random.default_rng(self.semilla)
@@ -63,53 +74,70 @@ class Bebe:
         self._P = np.zeros((MEMORIA, 6), np.float32)
         self.n_mem, self.pos = 0, 0
         self.intentos, self.listo = 0, False
-        self.celdas_vistas = set()
-        self.hitos = []
-        self.curva = []                                            # (intento, error imitando, R² imitación, R² directo, cobertura)
         self.nacimiento = time.time()
-        self.n_clases = 0 if red is None else len(red["claves"])
-        self.errores = [collections.deque(maxlen=40) for _ in range(self.n_clases)]
-        self.intentos_clase = np.zeros(self.n_clases, int)
-        self.estado_clase = ["aprendiendo"] * self.n_clases
-        if red is not None:                                        # examen fijo: 300 manos de internet
-            r = np.random.default_rng(99)
-            self.i_prueba = r.choice(len(red["pose"]), min(300, len(red["pose"])), replace=False)
+        self._nuevo_explorador()
+
+    def _nuevo_explorador(self):
+        self.celdas_vistas = getattr(self, "celdas_vistas", set())
+        self.habilidades, self.H = [], np.zeros((0, 6))
+        self.candidatas, self.casualidades = [], 0
+        self.radio, self.nivel, self.ultimo_hallazgo = RADIO_INICIAL, 1, self.intentos
+        self.valor = np.full(len(ESTRATEGIAS), 0.3)                # cuánto le enseña cada estrategia (lo aprende ella)
+        self.uso = np.zeros(len(ESTRATEGIAS), int)
+        self.diario, self.curva = [], []                           # curva: (intento, R² control, R² cuerpo, cobertura, habilidades, nivel)
+        self.prueba = cuerpo.pose(cuerpo.balbuceo(np.random.default_rng(11), 300))
+
+    def anotar(self, texto):
+        self.diario = (self.diario + [{"intento": self.intentos, "texto": texto}])[-200:]
+
+    # ---------- decidir (curiosidad) ----------
+    def preferencias(self):
+        disp = np.ones(len(ESTRATEGIAS), bool)
+        disp[2] = bool(self.candidatas or self.habilidades)
+        p = np.exp((self.valor - self.valor.max()) / 0.08) * disp
+        return 0.85 * p / p.sum() + 0.15 * disp / disp.sum()
+
+    def _novedad(self, p):
+        return float(np.min(cuerpo.distancia(self.H, p))) if len(self.H) else np.inf
+
+    def _umbral(self):
+        return max(0.45 * self.radio, 0.045)
+
+    @staticmethod
+    def _recortar(p):
+        return np.r_[np.clip(p[:5], 0, 1), np.clip(p[5], -1, 1)]
 
     @property
     def etapa(self):
-        if self.intentos < FIN_BALBUCEO or not self.listo:
-            return "balbuceo"
-        error = self.curva[-1][1] if self.curva else 1.0
-        return "domina" if error < 0.12 else "imita"
-
-    # ---------- elegir qué imitar (curiosidad) ----------
-    def _elegir_clase(self):
-        peso = np.ones(self.n_clases)
-        for c in range(self.n_clases):
-            e = list(self.errores[c])
-            if self.estado_clase[c] == "imposible":
-                peso[c] = 0.15                                     # lo sigue intentando de vez en cuando
-            elif len(e) >= 10:
-                progreso = max(np.mean(e[: len(e) // 2]) - np.mean(e[len(e) // 2:]), 0)   # ¿está mejorando?
-                peso[c] = 0.3 + 20 * progreso + (0.3 if self.estado_clase[c] == "aprendiendo" else 0)
-        return int(self.rng.choice(self.n_clases, p=peso / peso.sum()))
+        return "balbuceo" if self.intentos < FIN_BALBUCEO or not self.listo else "explora"
 
     # ---------- un intento ----------
     def intento(self, mapa, red):
-        etapa = self.etapa
-        meta, obs, clase = None, None, None
-        if etapa == "balbuceo" or red is None:
+        k = 3 if self.etapa == "balbuceo" else int(self.rng.choice(len(ESTRATEGIAS), p=self.preferencias()))
+        est = ESTRATEGIAS[k]
+        meta, cand, hab = None, None, None
+        if est == "balbucear":
             a = cuerpo.balbuceo(self.rng)[0]
+            texto = "mueve músculos al azar para ver qué pasa"
         else:
-            if self.rng.random() < 0.15:                            # a veces juega sola para conocer mejor su cuerpo
-                base = self._P[int(self.rng.integers(self.n_mem))]
-                meta = base + self.rng.normal(0, 0.18, 6)
-                meta = np.r_[np.clip(meta[:5], 0, 1), np.clip(meta[5], -1, 1)]
+            if est == "inventar":
+                meta, ruido = np.r_[self.rng.random(5), self.rng.uniform(-1, 1)], 0.15
+                texto = "se imagina una pose cualquiera e intenta hacerla"
+            elif est == "frontera":
+                base = self.H[self.rng.integers(len(self.H))] if len(self.H) else self._P[self.rng.integers(self.n_mem)]
+                d = self.rng.normal(size=6)
+                meta, ruido = self._recortar(base + d / np.linalg.norm(d) * self.radio * self.rng.uniform(1, 2)), 0.12
+                texto = "parte de algo que ya sabe y lo lleva más lejos"
+            elif self.candidatas and (not self.habilidades or self.rng.random() < 0.75):
+                cand = self.candidatas[0]
+                meta, ruido = cand["pose"], 0.04
+                texto = (f"repite algo nuevo que le salió en el intento {cand['intento']:,} "
+                         f"(práctica {cand['intentos'] + 1})").replace(",", ".")
             else:
-                clase = self._elegir_clase()
-                obs = int(self.rng.choice(np.flatnonzero(red["clase"] == clase)))
-                meta = red["pose"][obs].astype(float)
-            ruido = 0.25 if etapa == "imita" else 0.08
+                peores = sorted(self.habilidades, key=lambda h: -h["error"])[:5]
+                hab = peores[int(self.rng.integers(len(peores)))]
+                meta, ruido = np.asarray(hab["pose"]), 0.04
+                texto = f"repasa su habilidad #{hab['n']} para hacerla mejor"
             a = np.clip(self.inverso.predict(meta[None])[0] + self.rng.normal(0, ruido * self.rng.random(), 10), 0, 1)
         p = cuerpo.pose(a, self.rng)[0]
         self.intentos += 1
@@ -119,34 +147,67 @@ class Bebe:
         z = mapa.proyectar(p)[0]
         self.celdas_vistas.add(int(mapa.celda(z[None])[0]))
         error = float(cuerpo.distancia(p, meta)) if meta is not None else np.nan
-        nuevo = None
-        if clase is not None:
-            self.errores[clase].append(error)
-            self.intentos_clase[clase] += 1
-            nuevo = self._revisar(clase, p, red, obs)
+        recompensa, nueva = self._valorar(est, p, error, cand, hab, red)
+        self.valor[k] += 0.03 * (recompensa - self.valor[k])
+        self.uso[k] += 1
         self._aprender()
-        if self.intentos % 50 == 0 and self.listo:
-            self._evaluar(mapa, red)
-        return {"n": self.intentos, "etapa": etapa, "meta": None if meta is None else meta.tolist(), "alcanzado": p.tolist(),
-                "activacion": a.tolist(), "error": error, "z": z.tolist(),
-                "zmeta": None if meta is None else mapa.proyectar(meta)[0].tolist(), "descubrimiento": nuevo,
-                "clase": clase, "nombre": None if clase is None else str(red["nombres"][clase]),
-                "obs": None if obs is None else red["landmarks_vista"][obs].tolist()}
+        if self.intentos % 100 == 0 and self.listo:
+            self._medir(mapa)
+        if self.intentos - self.ultimo_hallazgo > SATURACION and not self.candidatas and self.radio > RADIO_MIN:
+            self.radio, self.nivel, self.ultimo_hallazgo = max(self.radio * FINURA, RADIO_MIN), self.nivel + 1, self.intentos
+            self.anotar(f"Ya no encuentra nada nuevo a simple vista: ahora distingue detalles más finos "
+                        f"(finura {self.nivel}: poses distintas desde {self.radio:.2f})")
+        return {"n": self.intentos, "etapa": self.etapa, "estrategia": est, "texto": texto,
+                "meta": None if meta is None else np.asarray(meta).tolist(), "alcanzado": p.tolist(), "activacion": a.tolist(),
+                "error": error, "z": z.tolist(), "zmeta": None if meta is None else mapa.proyectar(meta)[0].tolist(),
+                "nueva": nueva}
 
-    def _revisar(self, c, p, red, obs):
-        e = list(self.errores[c])
-        if self.estado_clase[c] != "aprendido" and len(e) >= 8 and np.median(e[-8:]) < APRENDIDO:
-            self.estado_clase[c] = "aprendido"
-            h = {"n": len(self.hitos) + 1, "nombre": str(red["nombres"][c]), "clave": str(red["claves"][c]),
-                 "intento": self.intentos, "dof": p.tolist(), "obs": red["landmarks_vista"][obs].tolist(),
-                 "error": float(np.median(e[-8:])), "foto": None, "t": time.time(), "tipo": "aprendido"}
-            self.hitos.append(h)
-            return h
-        if self.estado_clase[c] == "aprendiendo" and self.intentos_clase[c] >= MIN_INTENTOS and np.median(e) > IMPOSIBLE:
-            self.estado_clase[c] = "imposible"
-            return {"n": None, "nombre": str(red["nombres"][c]), "tipo": "imposible", "intento": self.intentos,
-                    "error": float(np.median(e))}
-        return None
+    def _valorar(self, est, p, error, cand, hab, red):
+        """Lo que le enseñó este intento: novedad, una habilidad nueva o progreso en algo que practica."""
+        nov = self._novedad(p)
+        r = 0.3 * min(nov / self.radio, 2.0) / 2.0
+        nueva = None
+        if cand is not None:
+            cand["errores"].append(error)
+            cand["intentos"] += 1
+            ult = cand["errores"][-REPETIR:]
+            if len(ult) == REPETIR and max(ult) < self._umbral():
+                self.candidatas.remove(cand)
+                if self._novedad(cand["pose"]) > 0.8 * self.radio:
+                    nueva = self._agregar(cand, red=red)
+                    r += 1.0
+            elif cand["intentos"] >= MAX_PRACTICA:
+                self.candidatas.remove(cand)                       # fue casualidad: todavía no la sabe repetir
+                self.casualidades += 1
+        elif hab is not None:
+            antes = hab["error"]
+            hab["error"] = 0.8 * antes + 0.2 * error
+            hab["practicas"] += 1
+            r += float(np.clip((antes - hab["error"]) * 5, 0, 0.5))
+        if (cand is None and nov > self.radio and len(self.candidatas) < MAX_CANDIDATAS
+                and all(cuerpo.distancia(c["pose"], p) > 0.5 * self.radio for c in self.candidatas)):
+            self.candidatas.append({"pose": p.copy(), "intento": self.intentos, "origen": est, "errores": [], "intentos": 0})
+            r += 0.5
+        return r, nueva
+
+    def _agregar(self, cand, red=None):
+        pose = np.asarray(cand["pose"], float)
+        parecido = None
+        if red is not None:
+            i, d = internet.espejo(red, pose)
+            if i is not None:
+                parecido = (str(red["nombres"][red["clase"][i]]), red["landmarks_vista"][i].tolist(), d)
+        h = {"n": len(self.habilidades) + 1, "pose": pose.tolist(), "nombre": cuerpo.describir_libre(pose),
+             "intento": self.intentos, "le_salio": cand["intento"], "origen": cand["origen"], "nivel": self.nivel,
+             "error": float(np.mean(cand["errores"][-REPETIR:])), "practicas": len(cand["errores"]),
+             "parecido": parecido[0] if parecido else None, "obs": parecido[1] if parecido else None,
+             "foto": None, "t": time.time()}
+        self.habilidades.append(h)
+        self.H = np.vstack([self.H, pose[None]])
+        self.ultimo_hallazgo = self.intentos
+        self.anotar(f"★ Habilidad #{h['n']}: {h['nombre'].lower()}"
+                    + (f" · en internet hay personas que hacen algo así («{h['parecido']}»)" if h["parecido"] else ""))
+        return h
 
     def _aprender(self, lote=64):
         if self.n_mem < lote:
@@ -156,49 +217,48 @@ class Bebe:
         self.directo.partial_fit(self._A[i], self._P[i])
         self.listo = True
 
-    def _evaluar(self, mapa, red):
+    def _medir(self, mapa):
         cob = len(self.celdas_vistas & set(mapa.alcanzables.tolist())) / len(mapa.alcanzables)
         A_al = cuerpo.balbuceo(np.random.default_rng(5), 300)
-        r2_dir = float(r2_score(cuerpo.pose(A_al), self.directo.predict(A_al)))
-        if red is None:
-            self.curva.append((self.intentos, np.nan, np.nan, r2_dir, cob))
-            return
-        metas = red["pose"][self.i_prueba]
-        logrado = cuerpo.pose(np.clip(self.inverso.predict(metas), 0, 1))
-        error = float(np.mean(cuerpo.distancia(logrado, metas)))
-        r2_imit = float(r2_score(metas[:, :5], logrado[:, :5]))   # la muñeca no se ve en las fotos
-        self.curva.append((self.intentos, error, r2_imit, r2_dir, cob))
+        r2_cuerpo = float(r2_score(cuerpo.pose(A_al), self.directo.predict(A_al)))
+        logrado = cuerpo.pose(np.clip(self.inverso.predict(self.prueba), 0, 1))
+        r2_control = float(r2_score(self.prueba, logrado))
+        self.curva.append((self.intentos, r2_control, r2_cuerpo, cob, len(self.habilidades), self.nivel))
 
-    def resumen(self, mapa, red):
-        u = self.curva[-1] if self.curva else (0, np.nan, np.nan, np.nan, 0.0)
+    def resumen(self, mapa):
+        u = self.curva[-1] if self.curva else (0, np.nan, np.nan, 0.0, 0, 1)
         ult = (self.pos - 1 - np.arange(min(self.n_mem, 4000))) % MEMORIA
-        clases = []
-        for c in range(self.n_clases):
-            e = list(self.errores[c])
-            clases.append({"nombre": str(red["nombres"][c]), "estado": self.estado_clase[c], "intentos": int(self.intentos_clase[c]),
-                           "error": float(np.median(e[-10:])) if e else np.nan})
-        return {"intentos": self.intentos, "etapa": self.etapa, "error_metas": u[1], "r2_imitacion": u[2], "r2_directo": u[3],
-                "cobertura": u[4], "curva": np.array(self.curva[-600:], float) if self.curva else np.zeros((0, 5)),
+        sin_obs = [{k: v for k, v in h.items() if k != "obs"} for h in self.habilidades[-150:]]
+        return {"intentos": self.intentos, "etapa": self.etapa, "r2_control": u[1], "r2_cuerpo": u[2], "cobertura": u[3],
+                "curva": np.array(self.curva[-600:], float) if self.curva else np.zeros((0, 6)),
                 "puntos": mapa.proyectar(self._P[ult]).astype(np.float32) if self.n_mem else np.zeros((0, 2)),
-                "hitos": self.hitos[-60:], "n_hitos": len(self.hitos), "clases": clases,
-                "aprendidos": sum(s == "aprendido" for s in self.estado_clase),
-                "imposibles": sum(s == "imposible" for s in self.estado_clase), "edad_s": time.time() - self.nacimiento}
+                "z_hab": mapa.proyectar(self.H).astype(np.float32) if len(self.H) else np.zeros((0, 2)),
+                "z_cand": mapa.proyectar(np.array([c["pose"] for c in self.candidatas])) if self.candidatas else np.zeros((0, 2)),
+                "habilidades": sin_obs, "n_habilidades": len(self.habilidades), "candidatas": len(self.candidatas),
+                "parecidos": sum(h["parecido"] is not None for h in self.habilidades), "casualidades": self.casualidades,
+                "nivel": self.nivel, "radio": self.radio, "preferencias": self.preferencias().tolist(), "uso": self.uso.tolist(),
+                "diario": self.diario[-40:], "edad_s": time.time() - self.nacimiento}
 
 
 # ------------------------------------------------------------------
 # Proceso que lanza la ventana "Entrenamiento libre"
 # ------------------------------------------------------------------
-def _cargar(red):
+def _cargar():
+    """Retoma lo último guardado. Si es de una versión anterior (que imitaba gestos), la guarda aparte y nace de cero."""
     ruta = RAIZ / "bebe.pkl"
-    if ruta.exists():
-        try:
-            with open(ruta, "rb") as f:
-                b = pickle.load(f)
-            if getattr(b, "version", 1) == VERSION and b.n_clases == (0 if red is None else len(red["claves"])):
-                return b
-        except Exception:
-            pass
-    return Bebe(red)
+    if not ruta.exists():
+        return Bebe(), None
+    try:
+        with open(ruta, "rb") as f:
+            b = pickle.load(f)
+        if getattr(b, "version", 1) == VERSION:
+            return b, None
+        motivo = f"la versión {getattr(b, 'version', 1)} imitaba gestos de internet"
+    except Exception as e:
+        motivo = f"no se pudo leer ({e})"
+    respaldo = RAIZ / f"bebe_respaldo_{time.strftime('%Y%m%d_%H%M%S')}.pkl"
+    os.replace(ruta, respaldo)
+    return Bebe(), f"Nace de cero: lo guardado antes ({motivo}) quedó aparte en {respaldo.name}."
 
 
 def _guardar(b):
@@ -210,7 +270,7 @@ def _guardar(b):
 
 
 def _foto(h, salida):
-    """Foto del descubrimiento: la mano de la persona (internet) y la de la mano bebé."""
+    """Foto de una habilidad: la mano bebé y, si existe, la persona de internet que hace algo parecido."""
     try:
         import matplotlib
         matplotlib.use("Agg")
@@ -218,30 +278,39 @@ def _foto(h, salida):
         from matplotlib.backends.backend_agg import FigureCanvasAgg
         from matplotlib.figure import Figure
         from ..motor import fotos
-        carpeta = RAIZ / "descubrimientos"
+        carpeta = RAIZ / "habilidades"
         carpeta.mkdir(parents=True, exist_ok=True)
-        ruta = carpeta / f"aprendio_{h['n']:03d}_{h['clave']}.png"
-        fotos.foto_gesto(ruta, np.array(h["dof"]), 0, f"Aprendió «{h['nombre']}»",
+        ruta = carpeta / f"habilidad_{h['n']:04d}.png"
+        fotos.foto_gesto(ruta, np.array(h["pose"]), 0, f"Habilidad #{h['n']}",
                          f"intento {h['intento']:,} · error {h['error']:.3f}".replace(",", "."))
-        fig = Figure(figsize=(7.6, 4.6), dpi=110)
-        FigureCanvasAgg(fig)
-        ax = fig.add_subplot(1, 2, 1)
-        L = np.asarray(h["obs"])
-        for a, b in internet.CONEXIONES:
-            ax.plot(L[[a, b], 0], L[[a, b], 1], color="#2563c9", lw=3, solid_capstyle="round")
-        ax.scatter(L[:, 0], L[:, 1], s=18, color="white", edgecolors="#2563c9", zorder=3)
-        ax.set_aspect("equal")
-        ax.set_axis_off()
-        ax.set_title("Lo que vio en internet", fontsize=10, color="#52514e")
-        ax2 = fig.add_subplot(1, 2, 2)
-        ax2.imshow(mpimg.imread(ruta))
-        ax2.set_axis_off()
-        fig.subplots_adjust(0.02, 0.02, 0.98, 0.92, 0.05)
-        fig.savefig(ruta)
+        if h.get("obs") is not None:
+            fig = Figure(figsize=(7.6, 4.6), dpi=110)
+            FigureCanvasAgg(fig)
+            ax = fig.add_subplot(1, 2, 1)
+            ax.imshow(mpimg.imread(ruta))
+            ax.set_axis_off()
+            ax2 = fig.add_subplot(1, 2, 2)
+            L = np.asarray(h["obs"])
+            for a, b in internet.CONEXIONES:
+                ax2.plot(L[[a, b], 0], L[[a, b], 1], color="#2563c9", lw=3, solid_capstyle="round")
+            ax2.scatter(L[:, 0], L[:, 1], s=18, color="white", edgecolors="#2563c9", zorder=3)
+            ax2.set_aspect("equal")
+            ax2.set_axis_off()
+            ax2.set_title(f"En internet se parece a «{h['parecido']}»", fontsize=10, color="#52514e")
+            fig.subplots_adjust(0.02, 0.02, 0.98, 0.92, 0.05)
+            fig.savefig(ruta)
         h["foto"] = str(ruta)
         salida.put({"tipo": "foto", "n": h["n"], "foto": str(ruta)})
     except Exception as e:
         salida.put({"tipo": "aviso", "texto": f"No se pudo tomar la foto: {e}"})
+
+
+def _fotografo(cola, salida):
+    while True:
+        h = cola.get()
+        if h is None:
+            return
+        _foto(h, salida)
 
 
 def proceso(salida, entrada):
@@ -263,18 +332,24 @@ def proceso(salida, entrada):
         return
     try:
         red = internet.cargar()
-        if red is None:
-            enviar({"tipo": "aviso", "texto": "Todavía no están las manos de internet (HaGRID). Aprende solo con su cuerpo."})
         mapa = cuerpo.Mapa()
-        b = _cargar(red)
-        centros = (np.stack([mapa.proyectar(np.median(red["pose"][red["clase"] == c], 0))[0] for c in range(len(red["claves"]))])
-                   if red is not None else np.zeros((0, 2)))
-        enviar({"tipo": "mapa", "nube": mapa.nube.astype(np.float32), "gestos": centros,
-                "nombres_gestos": [] if red is None else [str(n) for n in red["nombres"]], "lo": mapa.lo, "hi": mapa.hi,
+        b, aviso = _cargar()
+        if aviso:
+            enviar({"tipo": "aviso", "texto": aviso})
+        enviar({"tipo": "mapa", "nube": mapa.nube.astype(np.float32), "lo": mapa.lo, "hi": mapa.hi,
                 "musculos": cuerpo.MUSCULOS, "fuente": "" if red is None else str(red["fuente"]),
                 "n_manos": 0 if red is None else int(len(red["pose"]))})
+        if b.listo and not b.curva:
+            b._medir(mapa)
+        salida.put({"tipo": "estado", "pausa": False, **b.resumen(mapa)})   # lo guardado se ve de inmediato
+        fotos_pendientes = queue.Queue()
+        threading.Thread(target=_fotografo, args=(fotos_pendientes, salida), daemon=True).start()
+        for h in b.habilidades:                                             # fotos que faltaron (se cerró antes)
+            if not h.get("foto") and (h["n"] <= FOTOS_MAX or h.get("obs") is not None):
+                fotos_pendientes.put(h)
         velocidad, pausa, detener = 1.0, False, False
-        ultimo_envio = ultimo_estado = ultimo_guardado = 0.0
+        ultimo_envio = ultimo_estado = 0.0
+        ultimo_guardado = time.time()
         while not detener:
             while True:
                 try:
@@ -285,8 +360,11 @@ def proceso(salida, entrada):
                     velocidad = float(c["valor"])
                 elif c["cmd"] == "pausa":
                     pausa = bool(c["valor"])
+                    _guardar(b)
                 elif c["cmd"] == "renacer":
-                    b = Bebe(red)
+                    b = Bebe()
+                    fotos_pendientes = queue.Queue()                    # las fotos pendientes eran de la vida anterior
+                    threading.Thread(target=_fotografo, args=(fotos_pendientes, salida), daemon=True).start()
                     _guardar(b)
                     enviar({"tipo": "renacio"})
                 elif c["cmd"] == "detener":
@@ -294,29 +372,33 @@ def proceso(salida, entrada):
             ahora = time.time()
             if pausa:
                 if ahora - ultimo_estado > 0.5:
-                    enviar({"tipo": "estado", "pausa": True, **b.resumen(mapa, red)})
+                    enviar({"tipo": "estado", "pausa": True, **b.resumen(mapa)})
                     ultimo_estado = ahora
                 time.sleep(0.1)
                 continue
             r = b.intento(mapa, red)
-            if r["descubrimiento"]:
-                h = r["descubrimiento"]
-                enviar({"tipo": "descubrimiento", **h})
-                if h["tipo"] == "aprendido":
-                    threading.Thread(target=_foto, args=(h, salida), daemon=True).start()
+            if r["nueva"]:
+                h = r["nueva"]
+                enviar({"tipo": "habilidad", **{k: v for k, v in h.items() if k != "obs"}})
+                if h["n"] <= FOTOS_MAX or h["obs"] is not None:
+                    fotos_pendientes.put(h)
             intervalo = 0.6 / velocidad if velocidad < 1000 else 0.0
             if ahora - ultimo_envio >= max(intervalo, 0.08):
-                enviar({"tipo": "intento", **r, "velocidad": velocidad})
+                i, d = internet.espejo(red, r["alcanzado"], umbral=0.25) if red is not None else (None, np.inf)
+                enviar({"tipo": "intento", **{k: v for k, v in r.items() if k != "nueva"}, "velocidad": velocidad,
+                        "espejo": None if i is None else red["landmarks_vista"][i].tolist(),
+                        "espejo_nombre": None if i is None else str(red["nombres"][red["clase"][i]]), "espejo_d": d})
                 ultimo_envio = ahora
             if ahora - ultimo_estado > 0.5:
-                enviar({"tipo": "estado", "pausa": False, "velocidad": velocidad, **b.resumen(mapa, red)})
+                enviar({"tipo": "estado", "pausa": False, "velocidad": velocidad, **b.resumen(mapa)})
                 ultimo_estado = ahora
-            if ahora - ultimo_guardado > 60:
+            if ahora - ultimo_guardado > 20:                        # si se cierra a la fuerza, pierde a lo sumo 20 s
                 _guardar(b)
                 ultimo_guardado = ahora
             if intervalo:
                 time.sleep(intervalo)
         _guardar(b)
+        fotos_pendientes.put(None)
         enviar({"tipo": "detenido"})
     except Exception:
         enviar({"tipo": "error", "texto": traceback.format_exc()[-2500:]})

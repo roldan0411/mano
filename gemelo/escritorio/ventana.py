@@ -887,7 +887,7 @@ class Ventana(QtWidgets.QMainWindow):
     def _cabecera(self, e):
         self._fase(e["fase"])
         self.mensaje.setText(e.get("mensaje", ""))
-        self.chips["gen"].setText(f"gen {e['gen']} · {e['segundos_gen']:.1f} s")
+        self.chips["gen"].setText(f"gen {e['gen']}" + (f" · {e['segundos_gen']:.1f} s" if e["segundos_gen"] else ""))
         c = e.get("campeona", {})
         self.chips["campeona"].setText(f"campeona #{c['id']} · {pct(c['metricas']['acierto'])}" if c.get("metricas") else "sin campeona aún")
         d = e["datos"]

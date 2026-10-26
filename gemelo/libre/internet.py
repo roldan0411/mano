@@ -1,13 +1,14 @@
 """
-Lo que la mano bebé aprende de internet: manos de personas reales (HaGRID v2)
-=============================================================================
+El espejo de internet de la mano bebé: manos de personas reales (HaGRID v2)
+==========================================================================
 
 HaGRID v2 (Kapitanov et al., WACV 2024; licencia CC BY-SA 4.0): más de medio
 millón de fotos de personas haciendo 33 gestos cotidianos, cada mano con sus
 21 puntos (MediaPipe). Aquí NO se usan las fotos: solo los 21 puntos.
 
-De cada mano humana se saca "cuánto se dobla cada dedo" (0 = estirado,
-1 = cerrado), que es lo que la mano bebé intenta imitar con sus músculos:
+No son metas ni tareas: la mano bebé aprende sola, y cuando hace algo mira
+si alguna persona real hace algo parecido. Para comparar, de cada mano humana
+se saca "cuánto se dobla cada dedo" (0 = estirado, 1 = cerrado):
 
   dedo:   recto = la distancia de la base a la punta es igual al largo
           de sus tres falanges (eso no cambia aunque el dedo apunte a la
@@ -198,6 +199,14 @@ def descargar_muestra(salida=NPZ, por_gesto=POR_GESTO, megas=4.0, semilla=0, pro
                         claves=np.array(orden), nombres=np.array([NOMBRES[g] for g in orden]),
                         fuente=np.array("HaGRID v2 (Kapitanov et al., WACV 2024) · CC BY-SA 4.0"))
     return salida
+
+
+def espejo(red, p, umbral=0.2):
+    """La persona de internet cuya mano más se parece a la pose p -> (índice o None, distancia).
+    Solo cuentan los dedos: las fotos no muestran la muñeca."""
+    d = np.sqrt(((red["pose"][:, :5] - np.asarray(p, float)[:5]) ** 2).sum(1))
+    i = int(np.argmin(d))
+    return (i if d[i] < umbral else None), float(d[i])
 
 
 def cargar():

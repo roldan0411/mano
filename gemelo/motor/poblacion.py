@@ -17,6 +17,7 @@ En cada generación:
 import copy
 import json
 import os
+from pathlib import Path
 
 os.environ.setdefault("KERAS_BACKEND", "torch")
 
@@ -177,4 +178,16 @@ class Mano:
         m.modelo = keras.models.load_model(ruta, compile=False)
         m._optimizador()
         m.metricas, m.historial, m.pasos = info["metricas"], info["historial"], info.get("pasos", 0)
+        return m
+
+    @classmethod
+    def desde_campeona(cls, idx, carpeta):
+        """Una mano que arranca con la red de una campeona guardada (modelo.keras + ficha.json)."""
+        ficha = json.loads((Path(carpeta) / "ficha.json").read_text(encoding="utf-8"))
+        m = cls.__new__(cls)
+        m.idx, m.genoma = idx, ficha["genoma"]
+        m.linaje = f"C{ficha['campeona']}>{idx + 1}"
+        m.modelo = keras.models.load_model(Path(carpeta) / "modelo.keras", compile=False)
+        m._optimizador()
+        m.metricas, m.historial, m.pasos = dict(ficha["metricas"]), [], 0
         return m

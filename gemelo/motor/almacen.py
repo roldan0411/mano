@@ -78,7 +78,7 @@ class Almacen:
         return n, ruta
 
     def _retener(self):
-        filas = self.sql("SELECT id, archivo, mb FROM lotes ORDER BY id DESC")
+        filas = self.sql("SELECT id, archivo, mb FROM lotes WHERE archivo != '' ORDER BY id DESC")   # los ya borrados no cuentan
         total = 0.0
         for i, archivo, mb in filas:
             total += mb or 0

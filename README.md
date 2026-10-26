@@ -19,25 +19,27 @@ Mientras la ventana está abierta:
 
 Pestañas: **Competencia de manos** (las 10 manos InMoov en 3D moviéndose en tiempo real), **Red neuronal** (pesos y activaciones en vivo), **Gemelo y electrodos** (corte del antebrazo, electrodos desplazados, señal en cada etapa del amplificador, calibración), **Campeonas** (galería de fotos) y **Datos guardados**.
 
-Todo se guarda en `%USERPROFILE%\gemelo_mano\motor\` (base SQLite, lotes, examen, población y campeonas) y al reabrir continúa donde quedó. Con el cargador desconectado o poca RAM, el motor se pausa solo.
+Todo se guarda en `%USERPROFILE%\gemelo_mano\motor\` (base SQLite, lotes, examen, población y campeonas). La población se guarda en cada generación; al reabrir, cada mano retoma su última red guardada (si alguna no se puede leer, arranca con la campeona de mayor puntaje) y la ventana muestra de inmediato el ranking, el historial y las campeonas. Si Windows apagó la GPU (en batería), entrena en la CPU, más lento; si se desconecta el cargador en pleno entrenamiento con GPU, o queda poca RAM, se pausa y sigue mostrando todo.
 
 La entrada de estas redes son las 8 características **calibradas** (relativas a 20 s de calibración al ponerse los electrodos) de las 3 últimas ventanas: 24 valores. El firmware actual usa 8 sin calibrar, así que `modelo_red_calibrado.h` necesita la actualización del firmware con calibración.
 
-## Mano bebé: aprende de cero mirando manos de personas en internet
+## Mano bebé: aprende sola, desde cero, qué puede hacer su cuerpo
 
 Acceso directo **"Mano bebé (entrenamiento libre)"** en el escritorio, o el botón "Entrenamiento libre" de la aplicación (`app_gemelo.py --libre` la abre sola, sin GPU).
 
-Nadie le enseña gestos. La mano controla sus **10 músculos** (no gestos) y una biomecánica que no conoce los traduce en dedos y muñeca, con los acoples reales (los tendones flexores mueven varios dedos a la vez):
+Nadie le da gestos, listas ni metas. La mano controla sus **10 músculos** y una biomecánica que no conoce los traduce en dedos y muñeca, con los acoples reales (los tendones flexores mueven varios dedos a la vez):
 
-1. **Balbuceo**: activa músculos al azar y aprende cómo responde su cuerpo.
-2. **Imita lo que ve en internet**: mira la mano de una persona real de **HaGRID v2** (33 gestos cotidianos: "llamar", "ok", "rock", "me gusta"…), la traduce a "cuánto se dobla cada dedo" e intenta imitarla. Elige con curiosidad: practica más lo que está mejorando.
-3. Cada gesto que logra imitar es un **descubrimiento** con foto (la mano de la persona y la suya). Los que no logra tras muchos intentos los marca como **imposibles para su anatomía** (necesitan dedos independientes).
+1. **Balbuceo** (primeros 300 intentos): activa músculos al azar y aprende cómo responde su cuerpo.
+2. **Explora libre**: se pone sus propias metas y decide sola cómo aprender: *inventar* una pose cualquiera, *ir más allá* de algo que ya sabe, *practicar* algo nuevo que le salió, o *balbucear*. Prefiere la estrategia que más le está enseñando (curiosidad: novedad + progreso).
+3. Una **habilidad** es una pose que descubrió ella misma y ya sabe repetir a voluntad (3 veces seguidas), con foto y descripción dedo por dedo. El repertorio **no tiene tope**: cuando ya no encuentra nada nuevo, sube de **finura** (distingue detalles más finos) y sigue descubriendo.
 
-Su cerebro: un modelo inverso (pose → músculos) y uno directo (músculos → pose) que aprenden en línea; se reporta el **R² de la imitación**. Corre en CPU y guarda lo aprendido en `%USERPROFILE%\gemelo_mano\motorebe\`.
+**Internet es un espejo, no una tarea**: de cada cosa que hace mira si alguna persona real hace algo parecido (HaGRID v2, 19.800 manos) y lo anota en la habilidad.
 
-En una prueba de 15.000 intentos aprendió 15 gestos de internet (alto, palma, cuatro, me gusta, ok, puño, tomar una foto…) y reconoció 18 como imposibles para su anatomía (rock, paz, tres, llamar, dedo medio…): una pista concreta de qué gestos exigen tendones independientes en la prótesis.
+Su cerebro: un modelo inverso (pose → músculos) y uno directo (músculos → pose) que aprenden en línea. Siempre se ve el **R² del control** (pose lograda frente a la que se propuso, en 300 poses de examen) y el **R² de su cuerpo** (modelo directo). Corre en CPU, guarda cada 20 s y al cerrar en `%USERPROFILE%\gemelo_mano\motor\bebe\`, y al reabrir continúa. "Volver a nacer" la reinicia de cero.
 
-Datos: [HaGRID v2](https://github.com/hukenovs/hagrid) — Kapitanov et al., *HaGRID – HAnd Gesture Recognition Image Dataset*, WACV 2024, licencia CC BY-SA 4.0. Solo se usan los 21 puntos de cada mano (no las fotos), descargados parcialmente (600 manos por gesto).
+En una prueba desde cero descubrió su primera habilidad en el intento 318, tenía 41 a los 3.000 intentos y 132 a los 15.000 (ya en finura 2), con R² del control de 0,98.
+
+Datos del espejo: [HaGRID v2](https://github.com/hukenovs/hagrid) — Kapitanov et al., *HaGRID – HAnd Gesture Recognition Image Dataset*, WACV 2024, licencia CC BY-SA 4.0. Solo se usan los 21 puntos de cada mano (no las fotos), descargados parcialmente (600 manos por gesto).
 
 ## Estructura
 
@@ -46,7 +48,7 @@ notebooks/gemelo_mano.ipynb   ← EL proceso completo, en orden ("Ejecutar todo"
 app_gemelo.py                 ← APLICACIÓN DE ESCRITORIO (doble clic en "Gemelo de la mano.bat")
 gemelo/motor/                 ← motor continuo: gemelo v2, almacén, población de 10 manos, fotos
 gemelo/escritorio/            ← ventana Qt: manos 3D (OpenGL), red, antebrazo, osciloscopios, mano bebé
-gemelo/libre/                 ← mano bebé: cuerpo (10 músculos), cerebro que aprende, manos de internet (HaGRID)
+gemelo/libre/                 ← mano bebé: cuerpo (10 músculos), cerebro que explora solo, espejo de internet (HaGRID)
 gemelo/                       ← módulos que usa el notebook
   datos_emg.py                  D1: EMG sintético con dos vistas físicas por ventana
   datos_poses.py                D2: poses de mano de 21 puntos (topología MediaPipe)

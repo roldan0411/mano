@@ -95,6 +95,29 @@ def describir(p):
     return texto[0].upper() + texto[1:], None
 
 
+def describir_libre(p):
+    """La pose en palabras, dedo por dedo, sin compararla con ninguna lista de gestos."""
+    p = np.asarray(p, float)
+    estados = {"estirado": [], "a medias": [], "cerrado": []}
+    for k in range(5):
+        estados["estirado" if p[k] < 0.3 else "cerrado" if p[k] > 0.7 else "a medias"].append(DOF[k])
+    plural = {"estirado": "estirados", "a medias": "a medias", "cerrado": "cerrados"}
+    if any(len(v) == 5 for v in estados.values()):
+        texto = "todos los dedos " + plural[next(e for e, v in estados.items() if len(v) == 5)]
+    else:
+        partes = []
+        for e, v in estados.items():
+            if v:
+                nombres = v[0] if len(v) == 1 else ", ".join(v[:-1]) + (" e " if v[-1].startswith("í") else " y ") + v[-1]
+                partes.append(f"{nombres} {e if len(v) == 1 else plural[e]}")
+        texto = "; ".join(partes)
+    if p[5] > 0.35:
+        texto += "; muñeca hacia el dorso"
+    elif p[5] < -0.35:
+        texto += "; muñeca hacia la palma"
+    return texto[0].upper() + texto[1:]
+
+
 class Mapa:
     """Plano 2D fijo para dibujar todo lo que la mano puede hacer (PCA de poses alcanzables)."""
 

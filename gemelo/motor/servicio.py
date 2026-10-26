@@ -171,13 +171,41 @@ class Motor:
             self.en_vuelo.append(self._pedir_lote())
             self._recoger_lotes(esperar=True)
         self.muestra = self.X[torch.randint(0, self.X.shape[0], (20_000,), device=DISPOSITIVO)].cpu().numpy()
+        nuevas = [i for i, m in enumerate(self.manos) if m is None]      # solo si no había nada guardado
+        self.manos = [m or Mano(i, genoma_aleatorio(self.rng), self.muestra) for i, m in enumerate(self.manos)]
+        self.anotar(f"Población lista: {N_MANOS} manos · {self.X.shape[0]:,} ventanas en memoria"
+                    + (f" · {len(nuevas)} manos nuevas al azar" if nuevas else ""))
+
+    def retomar(self):
+        """Lo primero al abrir: la población guardada (o la campeona de más conocimiento) y todo lo que ya se sabe."""
+        self.aviso("preparando", "Cargando la última red guardada de cada mano…")
+        mejor = self.alm.sql("SELECT id, carpeta FROM campeonas ORDER BY puntaje DESC LIMIT 1", uno=True)
+        sembradas = []
         for i in range(N_MANOS):
             ruta = self.alm.raiz / "poblacion" / f"mano_{i:02d}.keras"
-            try:
-                self.manos.append(Mano.cargar(i, ruta) if ruta.exists() else Mano(i, genoma_aleatorio(self.rng), self.muestra))
-            except Exception:
-                self.manos.append(Mano(i, genoma_aleatorio(self.rng), self.muestra))
-        self.anotar(f"Población lista: {N_MANOS} manos · {self.X.shape[0]:,} ventanas en memoria")
+            mano = None
+            if ruta.exists():
+                try:
+                    mano = Mano.cargar(i, ruta)
+                except Exception:
+                    pass
+            if mano is None and mejor:
+                try:
+                    mano = Mano.desde_campeona(i, Path(mejor[1]))
+                    sembradas.append(i + 1)
+                except Exception:
+                    pass
+            self.manos.append(mano)
+        if sembradas:
+            self.anotar(f"Manos {', '.join(map(str, sembradas))} sin red guardada legible: arrancan con la campeona #{mejor[0]}")
+        if all(self.manos):
+            lider = max(self.manos, key=lambda m: m.metricas["puntaje"])
+            self.anotar(f"Retoma la generación {self.gen}: mejor mano {lider.idx + 1} con {lider.metricas['acierto'] * 100:.1f} % "
+                        f"de acierto y {lider.pasos:,} pasos de entrenamiento")
+            self._publicar(self._ranking(), 0.0, fase="preparando", mensaje="Red guardada cargada · preparando los datos…")
+
+    def _ranking(self):
+        return {m.idx: r + 1 for r, m in enumerate(sorted(self.manos, key=lambda m: -m.metricas["puntaje"]))}
 
     # ---------- una generación ----------
     def generacion(self):
@@ -217,8 +245,7 @@ class Motor:
         self.alm.sql("INSERT INTO generaciones VALUES (?,?,?,?,?,?)",
                      (self.gen, time.time(), max(puntajes), float(np.mean(puntajes)), int(self.X.shape[0]),
                       time.time() - t0))
-        if self.gen % 10 == 0:
-            self.guardar_poblacion()
+        self.guardar_poblacion()                          # cada generación: si se cierra a la fuerza no se pierde nada
         self._publicar(ranking, time.time() - t0)
 
     def _coronar(self, mano):
@@ -263,7 +290,7 @@ class Motor:
         return out
 
     # ---------- lo que ve la ventana ----------
-    def _publicar(self, ranking, segundos):
+    def _publicar(self, ranking, segundos, fase=None, mensaje=None):
         if self.demo_futura is None:
             self.demo_futura = self.pool.submit(gemelo2.demostracion, int(self.rng.integers(1 << 31)), self.amp)
         if self.demo_futura.done():
@@ -276,13 +303,13 @@ class Motor:
                         vista=demo["vista"])
         historial = self.alm.sql("SELECT id, mejor, media FROM generaciones ORDER BY id DESC LIMIT 200")[::-1]
         self.enviar(
-            "estado", fase="pausa" if self.pausa else "entrenando", gen=self.gen, segundos_gen=round(segundos, 1),
-            mensaje=f"Generación {self.gen} lista en {segundos:.1f} s",
+            "estado", fase=fase or ("pausa" if self.pausa else "entrenando"), gen=self.gen, segundos_gen=round(segundos, 1),
+            mensaje=mensaje or f"Generación {self.gen} lista en {segundos:.1f} s",
             manos=[{"mano": m.idx, "rank": ranking[m.idx], "linaje": m.linaje, "genoma": m.genoma,
                     "parametros": m.parametros, "pasos": m.pasos, **m.metricas} for m in self.manos],
             pesos={m.idx: m.vista_pesos() for m in self.manos},
             campeona=self.campeona, campeonas=self.campeonas(), eventos=self.eventos[-60:],
-            historial=np.array(historial, float), memoria=int(self.X.shape[0]), datos=self.alm.resumen(),
+            historial=np.array(historial, float), memoria=int(self.X.shape[0]) if hasattr(self, "X") else 0, datos=self.alm.resumen(),
             salud=self.salud(), amplificador={**asdict(self.amp), "g_ad620": round(self.amp.g_ad620, 1)},
             dispositivo=torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU")
 
@@ -296,14 +323,23 @@ class Motor:
     # ---------- bucle ----------
     def correr(self):
         try:
+            self.retomar()
             self.preparar()
+            if DISPOSITIVO.type == "cpu":
+                self.anotar("Sin GPU (Windows la apaga en batería): entrena en la CPU, más lento. "
+                            "Con el cargador conectado, reabre la aplicación para volver a la GPU.")
+            ultimo = 0.0
             while not self.detener:
                 self.atender()
                 s = self.salud()
-                motivo = None if s["cargador"] else "el cargador está desconectado (en batería Windows apaga la GPU)"
+                # la GPU se puede colgar si se desconecta el cargador en pleno entrenamiento; en la CPU no hay ese riesgo
+                motivo = (None if s["cargador"] or DISPOSITIVO.type == "cpu"
+                          else "se desconectó el cargador (en batería Windows apaga la GPU); conéctalo para seguir")
                 motivo = motivo or (f"solo hay {s['ram_libre_gb']} GB de RAM libre" if s["ram_libre_gb"] < 1.2 else None)
                 if self.pausa or motivo:
-                    self.aviso("pausa", "En pausa" + (f": {motivo}" if motivo else ""))
+                    if time.time() - ultimo > 5:              # en pausa la ventana sigue mostrando todo lo guardado
+                        self._publicar(self._ranking(), 0.0, fase="pausa", mensaje="En pausa" + (f": {motivo}" if motivo else ""))
+                        ultimo = time.time()
                     time.sleep(1)
                     continue
                 while len(self.en_vuelo) < 2:
