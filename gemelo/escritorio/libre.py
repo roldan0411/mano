@@ -465,7 +465,7 @@ class VentanaLibre(QtWidgets.QMainWindow):
             self.n_diario = (len(e["diario"]), ultimo)
             self.diario.clear()
             for d in reversed(e["diario"]):
-                it = QtWidgets.QListWidgetItem(f"{d['intento']:,} · {d['texto']}".replace(",", "."))
+                it = QtWidgets.QListWidgetItem(f"{d['intento']:,}".replace(",", ".") + f" · {d['texto']}")
                 if d["texto"].startswith("★"):
                     it.setForeground(QtGui.QBrush(QtGui.QColor(VERDE)))
                 self.diario.addItem(it)
