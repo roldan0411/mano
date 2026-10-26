@@ -286,4 +286,14 @@ N_ENT_SESGO = neat.N_ENT + 1
 
 
 def proceso(salida, entrada):
+    RAIZ.mkdir(parents=True, exist_ok=True)
+    candado = open(RAIZ / "en_uso.lock", "w")                   # una sola neuroevolución a la vez (comparten la población)
+    try:
+        import msvcrt
+        msvcrt.locking(candado.fileno(), msvcrt.LK_NBLCK, 1)
+    except ImportError:
+        pass
+    except OSError:
+        salida.put({"tipo": "error", "texto": "La neuroevolución ya está abierta en otra ventana. Usa esa o ciérrala primero."})
+        return
     Neuro(salida, entrada).correr()
