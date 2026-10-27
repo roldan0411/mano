@@ -4,8 +4,8 @@ La pista de la neuroevolución: una persona del gemelo haciendo gestos
 
 Como el circuito de los carros, pero para una prótesis: una persona virtual
 se pone los electrodos, se calibra (20 s) y hace 21 gestos al azar (cada uno
-3 veces, con fuerza variable). Las manos solo "escuchan" los 2 canales EMG
-(24 entradas: 8 características calibradas × 3 ventanas) y tienen que hacer
+3 veces, con fuerza variable). Las manos solo "escuchan" los 10 electrodos
+(120 entradas: 40 características calibradas × 3 ventanas) y tienen que hacer
 lo que la persona quiere, ventana a ventana (cada 100 ms).
 
 Una mano CHOCA cuando hace el gesto equivocado durante medio segundo seguido
@@ -41,7 +41,7 @@ def recorrido(semilla, senal=False):
     cond = de.condiciones_persona(nivel, rng)
     p = gemelo2.Persona(cond, rng)
     ses = p.colocar(rng)
-    desfase = rng.normal(0, amp.desfase_mv_sd * 1e-3, 2)
+    desfase = rng.normal(0, amp.desfase_mv_sd * 1e-3, sm.NUM_CANALES)
     F_cal = []
     for g in ia.GESTOS:                                           # calibración de 20 s al ponerse los electrodos
         cuentas, _ = gemelo2.sensor_por_etapas(de._fuentes(p, g, 1.0, cond.fatiga, rng), ses, cond, amp, rng, desfase)

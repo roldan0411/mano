@@ -2,7 +2,7 @@
 Aprendizaje contrastivo del EMG (profesor) y cabezas multitarea
 ================================================================
 
-Codificador 1D-CNN sobre la señal cruda (200 ms × 2 canales) que aprende un
+Codificador 1D-CNN sobre la señal cruda (200 ms × 10 electrodos) que aprende un
 espacio de 64 dimensiones donde "lo mismo" queda junto y "lo distinto" lejos.
 
 Dos fases con UNA sola pérdida (SupCon de Khosla et al. 2020):
@@ -72,7 +72,7 @@ class NormaL2(layers.Layer):
         return x / ops.sqrt(ops.sum(ops.square(x), axis=-1, keepdims=True) + 1e-12)
 
 
-def crear_codificador(dim=64, canales=2):
+def crear_codificador(dim=64, canales=ia.NUM_CANALES):
     ent = keras.Input((ia.VENTANA, canales), name="emg")
     x = PreprocesarEMG(name="preprocesar")(ent)
     energia = LogEnergia(name="log_energia")(x)
@@ -99,13 +99,13 @@ def crear_proyector(dim=64, salida=32):
 # Aumentos en la GPU (además del par físico del gemelo)
 # ------------------------------------------------------------------
 def aumentar(x):
-    """x: (B, 200, 2) float en cuentas. Ganancia por canal, cruce entre canales,
+    """x: (B, 200, 10) float en cuentas. Ganancia por canal, cruce con los electrodos vecinos,
     ruido, corrimiento temporal y, a veces, un electrodo flojo."""
     B, T, C = x.shape
     dev = x.device
     x = x - x.mean(1, keepdim=True)
     x = x * torch.exp(torch.randn(B, 1, C, device=dev) * 0.15)
-    x = x + torch.rand(B, 1, 1, device=dev) * 0.15 * x.flip(-1)
+    x = x + torch.rand(B, 1, 1, device=dev) * 0.15 * 0.5 * (x.roll(1, -1) + x.roll(-1, -1))   # vecinos alrededor del brazo
     x = x + torch.randn_like(x) * torch.rand(B, 1, 1, device=dev) * 6.0
     corr = torch.randint(-20, 21, (B, 1, 1), device=dev)
     idx = (torch.arange(T, device=dev)[None, :, None] + corr) % T
@@ -144,7 +144,7 @@ def _parametros(*modelos):
 
 @torch.no_grad()
 def embeddings(codificador, x, lote=4096, normalizar=False):
-    """Embedding de todas las ventanas x (n, 200, 2) con un codificador entrenado."""
+    """Embedding de todas las ventanas x (n, 200, 10) con un codificador entrenado."""
     out = []
     for i in range(0, len(x), lote):
         out.append(ops.convert_to_numpy(codificador(_a_gpu(x[i:i + lote]).float(), training=False)))

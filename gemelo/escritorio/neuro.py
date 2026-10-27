@@ -25,18 +25,17 @@ import pyqtgraph.opengl as gl
 from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtCore import Qt
 
+import ia_mano as ia
+from ..neuro.neat import N_ENT, NOMBRES_ENTRADAS, SESGO
 from .manos3d import COLOR_MANO, GIRO, LUZ, Mano, cargar_piezas
-from .ventana import C, NOMBRES, panel, pct, qcolor
+from .ventana import C, COLORES_CANAL, NOMBRES, panel, pct, qcolor
 
-N_ENT, SESGO = 24, 24
 COLORES_GESTO = ["#8a96a0", "#5b9bf0", "#e25b52", "#e0a743", "#a77bf0", "#3fbf9a", "#ec8350"]
 PALETA = ["#5b9bf0", "#3fbf9a", "#e0a743", "#a77bf0", "#ec8350", "#4fc3d9", "#d96fb0", "#9ccc65",
           "#f0d05b", "#7f8cff", "#ff8a80", "#4db6ac"]
 GRIS = (0.30, 0.32, 0.36, 1.0)
 VELOCIDADES = [("Cada generación ×1", "ver", 1.0), ("Cada generación ×2", "ver", 2.0),
                ("Cada generación ×4", "ver", 4.0), ("Rápida (ver la última)", "rapido", 4.0)]
-NOMBRES_ENTRADAS = [f"{c} t{'' if k == 2 else f'-{2 - k}'}" for k in range(3)
-                    for c in [f"{a}_{b}" for a in ("c1", "c2") for b in ("MAV", "RMS", "ZC", "WL")]]
 
 
 def color_especie(sid):
@@ -92,7 +91,7 @@ class Pista(QtWidgets.QWidget):
 
     def __init__(self):
         super().__init__()
-        self.setMinimumHeight(118)
+        self.setMinimumHeight(170)
         self.p, self.i, self.choques = None, 0.0, []
 
     def fijar(self, p, choques):
@@ -108,30 +107,30 @@ class Pista(QtWidgets.QWidget):
         g, est = self.p["gesto"], self.p["estable"]
         T = len(g)
         x0, ancho = 8, W - 16
-        X = lambda t: x0 + t / T * ancho
-        # señal EMG de los 2 canales (lo que "escuchan" las manos)
+        X = lambda t: x0 + 22 + t / T * (ancho - 22)
+        # señal EMG de los 10 electrodos (lo que "escuchan" las manos), un carril por electrodo
         adc = self.p.get("adc")
         y_emg, h_emg = 26, H - 26 - 46
         if adc is not None and len(adc):
             s = adc - np.median(adc, 0)
-            esc = np.percentile(np.abs(s), 99.5, axis=0) + 1e-6
+            esc = np.percentile(np.abs(s), 99.5) + 1e-6
             paso = max(1, len(s) // int(ancho))
             s = s[::paso]
-            n = len(s)
+            n, nc = len(s), s.shape[1]
             corte = int(self.i / T * n)
-            for c, color in enumerate((C["acento"], C["canal2"])):
-                yc = y_emg + h_emg * (0.27 + 0.46 * c)
-                for parte, alfa in (((0, corte), 230), ((corte, n), 60)):
-                    a, b = parte
+            carril = h_emg / nc
+            for c in range(nc):
+                yc = y_emg + carril * (c + 0.5)
+                for (a, b), alfa in (((0, corte), 230), ((corte, n), 55)):
                     if b - a < 2:
                         continue
-                    poli = QtGui.QPolygonF([QtCore.QPointF(x0 + k / n * ancho, yc - np.clip(s[k, c] / esc[c], -1, 1) * h_emg * 0.24)
+                    poli = QtGui.QPolygonF([QtCore.QPointF(x0 + 22 + k / n * (ancho - 22), yc - np.clip(s[k, c] / esc, -1, 1) * carril * 0.55)
                                             for k in range(a, b)])
-                    p.setPen(QtGui.QPen(qcolor(color, alfa), 1))
+                    p.setPen(QtGui.QPen(qcolor(COLORES_CANAL[c], alfa), 1))
                     p.drawPolyline(poli)
-            p.setPen(QtGui.QColor(C["muted"]))
-            p.setFont(QtGui.QFont("Segoe UI", 8))
-            p.drawText(QtCore.QRectF(x0, y_emg - 2, 200, 14), Qt.AlignLeft, "electrodo 1 (flexores) · electrodo 2 (extensores)")
+                p.setPen(QtGui.QColor(COLORES_CANAL[c]))
+                p.setFont(QtGui.QFont("Segoe UI", 7))
+                p.drawText(QtCore.QRectF(x0, yc - 6, 20, 12), Qt.AlignLeft | Qt.AlignVCenter, ia.CANALES[c])
         # gestos que quiere la persona
         y_bar, h_bar = H - 40, 22
         ini = 0
@@ -185,9 +184,12 @@ class RedNeat(QtWidgets.QWidget):
     def _posiciones(self, W, H):
         r = self.r
         nodos, prof, maxp = r["nodos"], r["prof"], r["maxp"]
-        izq, der, arriba, abajo = 92, W - 74, 14, H - 10
+        izq, der, arriba, abajo = 92, W - 74, 22, H - 10
+        usadas = {a for a, _, _ in r["conexiones"]}                 # de las 120 entradas, solo las que la red usa
         columnas = {}
         for n, d in zip(nodos, prof):
+            if n <= SESGO and n not in usadas:
+                continue
             columnas.setdefault(d if n >= N_ENT + 1 else 0, []).append(n)
         pos = {}
         for d, ns in columnas.items():
@@ -222,7 +224,7 @@ class RedNeat(QtWidgets.QWidget):
             if n < N_ENT + 1:
                 rad, brillo = 3.2, min(abs(v) / 2, 1)
                 p.setPen(Qt.NoPen)
-                p.setBrush(qcolor(C["canal2"] if n < N_ENT and NOMBRES_ENTRADAS[n].startswith("c2") else C["acento"], 60 + 195 * brillo))
+                p.setBrush(qcolor(C["canal2"] if n < N_ENT and NOMBRES_ENTRADAS[n].startswith("E") else C["acento"], 60 + 195 * brillo))
                 p.drawEllipse(q, rad, rad)
                 p.setPen(QtGui.QColor(C["muted"]))
                 p.drawText(QtCore.QRectF(0, q.y() - 6, 86, 12), Qt.AlignRight | Qt.AlignVCenter,
@@ -243,6 +245,11 @@ class RedNeat(QtWidgets.QWidget):
                 p.setPen(QtGui.QPen(QtGui.QColor(C["fg"]), 1))
                 p.setBrush(qcolor(C["acento"] if v > 0 else C["neg"], 40 + 215 * min(abs(v), 1)))
                 p.drawEllipse(q, 5.5, 5.5)
+        n_usadas = sum(1 for n in pos if n < N_ENT)
+        p.setPen(QtGui.QColor(C["muted"]))
+        p.setFont(QtGui.QFont("Segoe UI", 8))
+        p.drawText(QtCore.QRectF(4, 2, W - 8, 16), Qt.AlignLeft,
+                   f"usa {n_usadas} de las {N_ENT} entradas (40 características de los 10 electrodos × 3 ventanas)")
         p.end()
 
 
@@ -326,7 +333,7 @@ class VentanaNeuro(QtWidgets.QMainWindow):
 
         rejilla = QtWidgets.QGridLayout()
         rejilla.setSpacing(10)
-        f, l = panel("La pista · una persona del gemelo hace 21 gestos; las manos solo escuchan sus 2 electrodos")
+        f, l = panel("La pista · una persona del gemelo hace 21 gestos; las manos solo escuchan sus 10 electrodos")
         self.pista = Pista()
         l.addWidget(self.pista)
         rejilla.addWidget(f, 0, 0)

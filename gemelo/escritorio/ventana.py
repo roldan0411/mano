@@ -23,6 +23,7 @@ import pyqtgraph as pg
 from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtCore import Qt
 
+import ia_mano as ia
 from .manos3d import EscenaManos
 
 NOMBRES = ["Reposo", "Abierta", "Puño", "Pinza", "Señalar", "Flexión muñeca", "Extensión muñeca"]
@@ -52,6 +53,8 @@ QProgressBar::chunk {{ background: {C['muted']}; border-radius: 4px; }}
 QScrollArea {{ border: 0; }}
 """
 pg.setConfigOptions(antialias=True, background=C["panel"], foreground=C["muted"])
+# un color por electrodo: F1-F5 (flexores) en azules, E1-E5 (extensores) en verdes
+COLORES_CANAL = ["#a9cbff", "#80b2f7", "#5b9bf0", "#3d80dc", "#2a63bd", "#9be6cd", "#6cd4b2", "#3fbf9a", "#2ca282", "#1f8468"]
 
 
 def panel(titulo=None):
@@ -243,7 +246,7 @@ class RedWidget(QtWidgets.QWidget):
         p.setRenderHint(QtGui.QPainter.Antialiasing)
         W, H = self.width(), self.height()
         acts, ocultas, g, po = adelante(self.pesos, self.x)
-        tam = [24] + [len(c["b"]) for c in ocultas] + [13]
+        tam = [len(self.x)] + [len(c["b"]) for c in ocultas] + [13]
         nC = len(tam)
         xs = [150 + (W - 330) * c / (nC - 1) for c in range(nC)]
 
@@ -281,8 +284,11 @@ class RedWidget(QtWidgets.QWidget):
                 p.drawEllipse(QtCore.QPointF(xs[c], Y[c][k]), r, r)
         p.setPen(QtGui.QColor(C["muted"]))
         p.setFont(QtGui.QFont("Consolas", 8))
-        for k, n in enumerate(self.pesos["entradas"]):
-            p.drawText(QtCore.QRectF(4, Y[0][k] - 8, xs[0] - 14, 16), Qt.AlignRight | Qt.AlignVCenter, n)
+        por_canal = len(ia.CARAC_CANAL)
+        for k, n in enumerate(self.pesos["entradas"]):               # una etiqueta por electrodo y ventana (4 entradas c/u)
+            if k % por_canal == 0:
+                y = (Y[0][k] + Y[0][min(k + por_canal - 1, len(Y[0]) - 1)]) / 2
+                p.drawText(QtCore.QRectF(4, y - 8, xs[0] - 14, 16), Qt.AlignRight | Qt.AlignVCenter, n.replace("_MAV", ""))
         sal = acts[-1]
         gana = int(np.argmax(sal[:7]))
         for k in range(7):
@@ -299,7 +305,7 @@ class RedWidget(QtWidgets.QWidget):
         f.setBold(True)
         p.setFont(f)
         p.setPen(QtGui.QColor(C["fg"]))
-        titulos = ["entrada · 8 × 3 ventanas"] + [f"oculta {k + 1} · {len(c['b'])} ReLU" for k, c in enumerate(ocultas)] + ["gesto (7) · pose (6)"]
+        titulos = [f"entrada · {len(self.x) // 3} × 3 ventanas"] + [f"oculta {k + 1} · {len(c['b'])} ReLU" for k, c in enumerate(ocultas)] + ["gesto (7) · pose (6)"]
         for c, t in enumerate(titulos):
             p.drawText(QtCore.QRectF(xs[c] - 90, 2, 180, 18), Qt.AlignCenter, t)
         p.end()
@@ -381,7 +387,7 @@ class VistaRed(QtWidgets.QWidget):
         if not m:
             return
         g = m["genoma"]
-        vals = {"capas": f"24 → {g['h1']}" + (f" → {g['h2']}" if g["h2"] else "") + " → 7 + 6", "tasa de aprendizaje": f"{g['lr']:.2e}",
+        vals = {"capas": f"{3 * ia.NUM_CARACTERISTICAS} → {g['h1']}" + (f" → {g['h2']}" if g["h2"] else "") + " → 7 + 6", "tasa de aprendizaje": f"{g['lr']:.2e}",
                 "olvido (dropout)": g["olvido"], "L2": g["l2"], "peso de la pose": g["peso_pose"], "ruido de aumento": g["ruido"],
                 "linaje": m["linaje"], "puntaje": f"{m['puntaje'] * 100:.1f}", "acierto": pct(m["acierto"]),
                 "pseudo-R² gesto": f"{m['pseudo_r2']:.3f}", "R² pose": f"{m['r2_pose']:.3f}", "pasos entrenados": f"{m['pasos']:,}"}
@@ -446,7 +452,7 @@ class BrazoWidget(QtWidgets.QWidget):
         p.drawText(QtCore.QRectF(cx + R * 0.1, cy - 10, R * 0.22, 16), Qt.AlignCenter, "cúbito")
         p.drawText(QtCore.QRectF(4, cy - R, 120, 16), Qt.AlignLeft, "↑ lado del dorso")
         p.drawText(QtCore.QRectF(4, cy + R - 14, 120, 16), Qt.AlignLeft, "↓ lado de la palma")
-        colores = [C["acento"], C["canal2"]]
+        colores = COLORES_CANAL
         ang_m = [a + d for a, d in zip(ge["angulos"], ge["dang_persona"])]
         for c, fila in enumerate(ge["acople"]):
             for k, w in enumerate(fila):
@@ -469,51 +475,45 @@ class BrazoWidget(QtWidgets.QWidget):
             p.drawText(QtCore.QRectF(q.x() - r, q.y() - 8, 2 * r, 16), Qt.AlignCenter, n)
         for c, ang in enumerate(ge["electrodos"]):
             nom, act_p = P(ge["electrodos_nominal"][c], R + 12), P(ang, R + 12)
-            pen = QtGui.QPen(QtGui.QColor(colores[c]), 1.6, Qt.DashLine)
+            pen = QtGui.QPen(QtGui.QColor(colores[c]), 1.4, Qt.DashLine)
             p.setPen(pen)
             p.setBrush(Qt.NoBrush)
-            p.drawEllipse(nom, 8, 8)
-            p.setPen(QtGui.QPen(QtGui.QColor(colores[c]), 1.6))
+            p.drawEllipse(nom, 6, 6)
+            p.setPen(QtGui.QPen(QtGui.QColor(colores[c]), 1.4))
             p.drawLine(nom, act_p)
             p.setBrush(QtGui.QColor(colores[c]))
-            p.drawEllipse(act_p, 8, 8)
-            et = P(ang, R + 40)
+            p.drawEllipse(act_p, 6, 6)
+            et = P(ang, R + 30)
             p.setFont(f)
-            p.drawText(QtCore.QRectF(et.x() - 50, et.y() - 8, 100, 16), Qt.AlignCenter, f"canal {c + 1}")
+            p.drawText(QtCore.QRectF(et.x() - 20, et.y() - 8, 40, 16), Qt.AlignCenter, ia.CANALES[c])
         p.end()
 
 
 class Osciloscopio(pg.PlotWidget):
+    """Los 10 electrodos en carriles (como un electroencefalograma), todos con la misma escala:
+    así se ve qué electrodo capta más en cada gesto."""
+
     def __init__(self, unidad, rieles=None, rango=None):
         super().__init__()
-        self.setMinimumHeight(92)
-        self.showGrid(y=True, alpha=0.12)
-        self.setLabel("left", unidad)
-        self.c1 = self.plot(pen=pg.mkPen(C["acento"], width=1))
-        self.c2 = self.plot(pen=pg.mkPen(C["canal2"], width=1))
+        self.setMinimumHeight(120)
+        self.unidad = unidad
+        self.curvas = [self.plot(pen=pg.mkPen(c, width=1)) for c in COLORES_CANAL]
         self.cursor = pg.InfiniteLine(angle=90, pen=pg.mkPen(C["mal"], width=1.5))
         self.addItem(self.cursor)
-        self.rieles = []
-        self.rango = rango
+        self.setYRange(-0.6, len(COLORES_CANAL) - 0.4, padding=0)
+        self.getAxis("left").setTicks([[(len(COLORES_CANAL) - 1 - k, n) for k, n in enumerate(ia.CANALES)]])
         self.setMouseEnabled(x=False, y=False)
         self.hideButtons()
 
     def datos(self, serie, fs, rieles=None):
         s = np.asarray(serie, float)
+        s = s - np.median(s, axis=0)                     # sin la continua de cada electrodo: se ve la forma de onda
         t = np.arange(len(s)) / fs
-        self.c1.setData(t, s[:, 0])
-        self.c2.setData(t, s[:, 1])
-        for r in self.rieles:
-            self.removeItem(r)
-        self.rieles = []
-        for v in rieles or []:
-            ln = pg.InfiniteLine(pos=v, angle=0, pen=pg.mkPen(C["mal"], width=1, style=Qt.DashLine))
-            self.addItem(ln)
-            self.rieles.append(ln)
-        if self.rango:
-            self.setYRange(*self.rango, padding=0.02)
-        else:
-            self.enableAutoRange(axis="y")
+        escala = max(np.percentile(np.abs(s), 99.9), 1e-12)
+        n = len(self.curvas)
+        for k, curva in enumerate(self.curvas):
+            curva.setData(t, (n - 1 - k) + 0.48 * np.clip(s[:, k] / escala, -1, 1))
+        self.setLabel("left", f"{self.unidad} (±{escala:.3g} por carril)")
 
 
 class VistaGemelo(QtWidgets.QWidget):
@@ -548,7 +548,7 @@ class VistaGemelo(QtWidgets.QWidget):
         l.addLayout(self.ficha)
         col.addWidget(f, 2)
         lay.addLayout(col, 2)
-        f, l = panel("De los electrodos al ESP32, etapa por etapa · canal 1 (azul) y canal 2 (verde)")
+        f, l = panel("De los 10 electrodos al ESP32, etapa por etapa · F1–F5 flexores (azules) · E1–E5 extensores (verdes)")
         self.osc = {}
         for clave, nombre, unidad, rango in (("electrodo_uv", "Electrodos", "µV", None), ("ad620_v", "Amplificador AD620", "V", None),
                                               ("filtro_v", "Filtro 16–482 Hz × 10", "V", None), ("adc", "ADC del ESP32 (12 bits)", "cuentas", (0, 4095))):
@@ -569,9 +569,10 @@ class VistaGemelo(QtWidgets.QWidget):
         self.carac = pg.PlotWidget()
         self.carac.setMinimumHeight(92)
         self.carac.setYRange(-3, 3)
-        self.carac.getAxis("bottom").setTicks([[(k, f"c{1 + k // 4} {n}") for k, n in enumerate(["MAV", "RMS", "ZC", "WL"] * 2)]])
-        self.barras = pg.BarGraphItem(x=np.arange(8), height=np.zeros(8), width=0.7,
-                                      brushes=[pg.mkBrush(C["acento"])] * 4 + [pg.mkBrush(C["canal2"])] * 4)
+        k_c = len(ia.CARAC_CANAL)
+        self.carac.getAxis("bottom").setTicks([[(k * k_c + 1.5, n) for k, n in enumerate(ia.CANALES)]])
+        self.barras = pg.BarGraphItem(x=np.arange(ia.NUM_CARACTERISTICAS), height=np.zeros(ia.NUM_CARACTERISTICAS), width=0.75,
+                                      brushes=[pg.mkBrush(c) for c in COLORES_CANAL for _ in range(k_c)])
         self.carac.addItem(self.barras)
         self.carac.setMouseEnabled(x=False, y=False)
         self.carac.hideButtons()
@@ -649,8 +650,9 @@ class VistaGemelo(QtWidgets.QWidget):
         vals = {"nivel de dificultad": f"{p['nivel']} de 5", "diferencias entre personas": f"{p['variabilidad']:.2f}",
                 "ruido de electrodos": f"× {p['ruido']:.2f}", "interferencia 60 Hz": f"{p['interferencia_60hz']:.1f} µV",
                 "fatiga": f"{p['fatiga']:.2f}",
-                "electrodos movidos": " · ".join(f"canal {c + 1}: {d:+.0f}°, {ge['axial_cm'][c]:+.1f} cm" for c, d in enumerate(corr)),
-                "desfase continuo": " · ".join(f"canal {c + 1}: {d:+.1f} mV" for c, d in enumerate(a["desfase_mv"])),
+                "electrodos movidos": f"giro común {np.mean(corr):+.0f}° (cada uno ±{np.std(corr):.0f}°) · "
+                                      f"{np.mean(ge['axial_cm']):+.1f} cm a lo largo del brazo",
+                "desfase continuo": f"de {min(a['desfase_mv']):+.1f} a {max(a['desfase_mv']):+.1f} mV entre los 10 electrodos",
                 "AD620": f"G = {a['g_ad620']:.0f} · total {a['g_total']:.0f}", "saturación": "SÍ: llegó al riel" if a["saturo"] else "no"}
         for k, val in vals.items():
             self.ficha_lbl[k].setText(val)

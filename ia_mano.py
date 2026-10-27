@@ -34,8 +34,13 @@ FS = 1000          # muestras por segundo
 VENTANA = 200      # 200 ms
 PASO = 100         # una predicción cada 100 ms
 UMBRAL_ZC = 20     # cuentas del ADC
-NUM_CARACTERISTICAS = 8
-NOMBRES_CARAC = [f"{c}_{n}" for c in ("c1", "c2") for n in ("MAV", "RMS", "ZC", "WL")]
+# 10 electrodos, cada uno un canal contra una referencia común (en el codo):
+# F1-F5 sobre los flexores (cara palmar) y E1-E5 sobre los extensores (cara dorsal)
+CANALES = [f"F{i}" for i in range(1, 6)] + [f"E{i}" for i in range(1, 6)]
+NUM_CANALES = len(CANALES)
+CARAC_CANAL = ("MAV", "RMS", "ZC", "WL")
+NUM_CARACTERISTICAS = len(CARAC_CANAL) * NUM_CANALES      # 40
+NOMBRES_CARAC = [f"{c}_{n}" for c in CANALES for n in CARAC_CANAL]
 UMBRAL_CONFIANZA = 0.60
 DEDOS = ["pulgar", "indice", "medio", "anular", "menique"]
 
@@ -66,12 +71,12 @@ def caracteristicas_canal(x):
     return [mav, rms, float(zc), wl]
 
 
-def caracteristicas_ventana(c1, c2):
-    return caracteristicas_canal(c1) + caracteristicas_canal(c2)
+def caracteristicas_ventana(*canales):
+    return [v for c in canales for v in caracteristicas_canal(c)]
 
 
 def caracteristicas_lote(ventanas):
-    """ventanas: arreglo (n, VENTANA, 2) en cuentas del ADC -> (n, 8). Vectorizado."""
+    """ventanas: arreglo (n, VENTANA, canales) en cuentas del ADC -> (n, 4 × canales). Vectorizado."""
     v = np.asarray(ventanas, dtype=np.float64)
     v = v - v.mean(axis=1, keepdims=True)
     mav = np.mean(np.abs(v), axis=1)
@@ -79,17 +84,16 @@ def caracteristicas_lote(ventanas):
     d = np.diff(v, axis=1)
     zc = np.sum((v[:, :-1] * v[:, 1:] < 0) & (np.abs(d) >= UMBRAL_ZC), axis=1).astype(np.float64)
     wl = np.sum(np.abs(d), axis=1)
-    # orden: c1 MAV, RMS, ZC, WL, c2 MAV, RMS, ZC, WL
-    return np.stack([mav[:, 0], rms[:, 0], zc[:, 0], wl[:, 0],
-                     mav[:, 1], rms[:, 1], zc[:, 1], wl[:, 1]], axis=1)
+    # orden: canal 1 MAV, RMS, ZC, WL, canal 2 MAV, RMS, ZC, WL, …
+    return np.stack([mav, rms, zc, wl], axis=2).reshape(len(v), -1)
 
 
 def ventanear(senal, descarte=0):
-    """senal (n, 2) -> ventanas (k, VENTANA, 2) con paso PASO."""
+    """senal (n, canales) -> ventanas (k, VENTANA, canales) con paso PASO."""
     s = np.asarray(senal)[descarte:]
     idx = range(0, len(s) - VENTANA + 1, PASO)
     if len(s) < VENTANA:
-        return np.empty((0, VENTANA, 2))
+        return np.empty((0, VENTANA, s.shape[1] if s.ndim == 2 else NUM_CANALES))
     return np.stack([s[i:i + VENTANA] for i in idx])
 
 

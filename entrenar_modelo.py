@@ -69,7 +69,7 @@ def construir_dataset(df):
         if gesto not in GESTOS:
             continue
         bloque = bloque.sort_values("muestra")
-        senal = bloque[["c1", "c2"]].to_numpy()
+        senal = bloque[ia.CANALES].to_numpy()               # columnas F1..F5, E1..E5
         v = ia.ventanear(senal)
         if len(v) == 0:
             continue

@@ -2,7 +2,7 @@
 D1 — Dataset EMG sintético del gemelo digital
 ==============================================
 
-Usa la misma física que simulador.py (10 músculos, 2 canales, circuito
+Usa la misma física que simulador.py (10 músculos, 10 electrodos, circuito
 AD620 + pasa-banda, ADC de 12 bits a 1 kHz), pero genera cada repetición
 DOS VECES con las mismas fuentes musculares y distinto sensor:
 
@@ -76,7 +76,7 @@ class Persona:
         self.ganancia = np.exp(rng.normal(0, 0.35 * v, M))
         self.patron = {g: np.clip(a * np.exp(rng.normal(0, 0.25 * v, M)) + rng.normal(0, 0.03 * v, M), 0, 1)
                        for g, a in sm.ACTIVACION.items()}
-        self.piel = np.exp(rng.normal(0, 0.2 * v, 2))
+        self.piel = np.exp(rng.normal(0, 0.2 * v, sm.NUM_CANALES))
         self.W = self.colocar_electrodos()
 
     def colocar_electrodos(self):
@@ -103,18 +103,19 @@ def _fuentes(persona, gesto, intensidad, fatiga, rng):
 
 
 def _sensor(s, W, piel, cond, rng):
-    """Electrodos + circuito + ADC: de voltios musculares a cuentas (n, 2) a 1 kHz."""
+    """Electrodos + circuito + ADC: de voltios musculares a cuentas (n, 10) a 1 kHz."""
     N = s.shape[0]
+    C = W.shape[0]
     t = np.arange(N) / sm.FS_INTERNA
     v = (s @ W.T) * piel
-    v += rng.normal(0, 3e-6 * cond.ruido, (N, 2))
+    v += rng.normal(0, 3e-6 * cond.ruido, (N, C))
     v += cond.interferencia_60hz * rng.uniform(0.7, 1.3) * 1e-6 * \
-        np.sin(2 * np.pi * 60 * t + rng.uniform(0, 2 * np.pi))[:, None] * np.array([1.0, 0.8])
+        np.sin(2 * np.pi * 60 * t + rng.uniform(0, 2 * np.pi))[:, None] * sm.PESO_60HZ[:C]
     ta = np.clip(t - INICIO / 1000, 0, None)
     art = rng.uniform(0.05, 0.3) * 1e-3 * np.exp(-ta / 0.15) * np.sin(2 * np.pi * 4 * ta) * (ta > 0)
-    v += art[:, None] * np.array([1.0, rng.uniform(0.5, 0.9)])
-    salida = np.empty((N // sm.DECIMACION, 2))
-    for c in range(2):
+    v += art[:, None] * rng.uniform(0.5, 1.0, C)
+    salida = np.empty((N // sm.DECIMACION, C))
+    for c in range(C):
         y = np.clip(signal.sosfilt(sm.SOS_CADENA, v[:, c]), -7.5, 7.5)
         salida[:, c] = np.clip(1.65 + y[sm.DECIMACION - 1::sm.DECIMACION], 0, 3.3)
     cuentas = np.round(salida / 3.3 * 4095 + rng.normal(0, 1.5, salida.shape))
@@ -141,7 +142,7 @@ def simular_persona(args):
     rng = np.random.default_rng(semilla)
     cond = condiciones_persona(nivel, rng)
     p = Persona(cond, rng)
-    piel_b = p.piel * np.exp(rng.normal(0, 0.1, 2))
+    piel_b = p.piel * np.exp(rng.normal(0, 0.1, sm.NUM_CANALES))
     out = {k: [] for k in ("x_a", "x_b", "gesto", "pose", "fuerza", "progreso", "intensidad",
                            "repeticion", "ventana_idx")}
     rep = 0
@@ -196,7 +197,7 @@ def generar_d1(n_personas=160, rondas=3, semilla=2026, ruta=None, procesos=None,
     d["split"] = dividir_por_persona(d["persona"], semilla)
     guardar_h5(d, ruta, {"version": VERSION, "semilla": semilla, "n_personas": n_personas, "rondas": rondas,
                          "gestos": ia.GESTOS, "dof": NOMBRES_DOF, "fs": ia.FS, "ventana": ia.VENTANA,
-                         "paso": ia.PASO, "canales": 2, "fuente": "gemelo digital (simulador.py)",
+                         "paso": ia.PASO, "canales": sm.NUM_CANALES, "fuente": "gemelo digital (simulador.py)",
                          "vistas": "x_a y x_b: misma contracción, distinto sensor", "autor": config.AUTOR})
     return ruta
 

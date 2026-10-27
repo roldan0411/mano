@@ -40,25 +40,53 @@ A_MVC = 0.4e-3                # amplitud RMS (V) de un músculo superficial al 1
 # ------------------------------------------------------------------
 # 1. Antebrazo virtual
 # ------------------------------------------------------------------
-#            nombre: (descripción, banda Hz, peso canal 1, peso canal 2)
+#            nombre: (descripción, banda Hz, ángulo en el corte del antebrazo (°, 90 = dorso,
+#                     270 = palma), profundidad (1 = justo bajo la piel, 0 = junto al hueso))
 # Los músculos de la muñeca tienen fibras más grandes y conducción más rápida,
 # por eso su EMG tiene más contenido de alta frecuencia que el de los dedos.
 # Los músculos profundos llegan más atenuados y con menos alta frecuencia.
 MUSCULOS = {
-    "FDS": ("Flexor superficial de los dedos", (25, 190), 1.00, 0.10),
-    "FDP": ("Flexor profundo de los dedos",    (20, 130), 0.50, 0.06),
-    "FPL": ("Flexor largo del pulgar",         (20, 150), 0.35, 0.05),
-    "FCR": ("Flexor radial del carpo",         (45, 300), 0.85, 0.08),
-    "FCU": ("Flexor cubital del carpo",        (45, 300), 0.60, 0.10),
-    "EDC": ("Extensor común de los dedos",     (25, 190), 0.10, 1.00),
-    "EIP": ("Extensor propio del índice",      (20, 150), 0.05, 0.35),
-    "EPL": ("Extensor largo del pulgar",       (20, 150), 0.05, 0.30),
-    "ECR": ("Extensores radiales del carpo",   (45, 300), 0.08, 0.80),
-    "ECU": ("Extensor cubital del carpo",      (45, 300), 0.10, 0.60),
+    "FDS": ("Flexor superficial de los dedos", (25, 190), 270, 0.75),
+    "FDP": ("Flexor profundo de los dedos",    (20, 130), 250, 0.45),
+    "FPL": ("Flexor largo del pulgar",         (20, 150), 300, 0.50),
+    "FCR": ("Flexor radial del carpo",         (45, 300), 315, 0.85),
+    "FCU": ("Flexor cubital del carpo",        (45, 300), 225, 0.85),
+    "EDC": ("Extensor común de los dedos",     (25, 190), 90, 0.80),
+    "EIP": ("Extensor propio del índice",      (20, 150), 110, 0.55),
+    "EPL": ("Extensor largo del pulgar",       (20, 150), 70, 0.50),
+    "ECR": ("Extensores radiales del carpo",   (45, 300), 45, 0.85),
+    "ECU": ("Extensor cubital del carpo",      (45, 300), 135, 0.85),
 }
 NOMBRES_MUSCULOS = list(MUSCULOS)
-ACOPLE_BASE = np.array([[MUSCULOS[m][2] for m in MUSCULOS],
-                        [MUSCULOS[m][3] for m in MUSCULOS]])
+ANG = np.array([MUSCULOS[m][2] for m in MUSCULOS], float)
+PROF = np.array([MUSCULOS[m][3] for m in MUSCULOS], float)
+
+# 10 electrodos alrededor del antebrazo (mismo orden que ia.CANALES):
+# F1-F5 cada 30° sobre la cara palmar (flexores), E1-E5 cada 30° sobre la dorsal (extensores)
+ELECTRODOS_NOMINAL = np.array([210.0, 240.0, 270.0, 300.0, 330.0, 30.0, 60.0, 90.0, 120.0, 150.0])
+NUM_CANALES = len(ELECTRODOS_NOMINAL)
+assert NUM_CANALES == ia.NUM_CANALES
+SIGMA_ANG, LAMBDA_PROF, PISO_CONDUCCION, LAMBDA_AXIAL = 38.0, 0.35, 0.05, 3.0
+
+
+def acople(ang_electrodos, axial_cm=None, persona_dang=None):
+    """Matriz (electrodos × 10 músculos) de acople músculo → electrodo a partir de la geometría:
+    w = exp(-Δθ² / 2σ²) · exp(-(1 - prof) / λ) + piso de conducción, normalizada por electrodo
+    y atenuada por el corrimiento a lo largo del brazo: exp(-|z| / λz)."""
+    ang = ANG + (0 if persona_dang is None else persona_dang)
+    e = np.atleast_1d(np.asarray(ang_electrodos, float))
+    d = (ang[None, :] - e[:, None] + 180) % 360 - 180
+    prof = np.exp(-(1 - PROF[None, :]) / LAMBDA_PROF)
+    w = np.exp(-0.5 * (d / SIGMA_ANG) ** 2) * prof + PISO_CONDUCCION * prof
+    w = w / w.max(axis=1, keepdims=True)
+    z = np.zeros(len(e)) if axial_cm is None else np.abs(np.asarray(axial_cm, float))
+    return w * np.exp(-z / LAMBDA_AXIAL)[:, None]
+
+
+ACOPLE_BASE = acople(ELECTRODOS_NOMINAL)
+# la interferencia de 60 Hz y los artefactos de movimiento no llegan igual a todos los electrodos
+PESO_60HZ = np.linspace(1.0, 0.8, NUM_CANALES)
+PESO_ARTEFACTO = np.linspace(1.0, 0.7, NUM_CANALES)
 
 # Activación de cada músculo (0 a 1) en cada gesto.
 #            FDS   FDP   FPL   FCR   FCU   EDC   EIP   EPL   ECR   ECU
@@ -129,7 +157,7 @@ class Antebrazo:
         self.patron = {g: np.clip(a * np.exp(self.rng.normal(0, 0.25 * v, M))
                                   + self.rng.normal(0, 0.03 * v, M), 0.0, 1.0)
                        for g, a in ACTIVACION.items()}
-        self.piel = np.exp(self.rng.normal(0, 0.2 * v, 2))
+        self.piel = np.exp(self.rng.normal(0, 0.2 * v, NUM_CANALES))
         self.recolocar_electrodos()
         self._reiniciar()
 
@@ -168,7 +196,7 @@ class Antebrazo:
         if hasattr(self, "zi_m"):
             del self.zi_m
         self._filtros_musculo()
-        self.zi_cadena = [np.zeros((SOS_CADENA.shape[0], 2)) for _ in range(2)]
+        self.zi_cadena = [np.zeros((SOS_CADENA.shape[0], 2)) for _ in range(NUM_CANALES)]
         self.t = 0.0
         self.fase60 = self.rng.uniform(0, 2 * np.pi)
         self.fases_mod = self.rng.uniform(0, 2 * np.pi, (len(MUSCULOS), 2))
@@ -189,7 +217,7 @@ class Antebrazo:
         self.t_artefacto = 0.0
 
     def muestras(self, n):
-        """Genera n muestras a 1 kHz -> arreglo (n, 2) de cuentas del ADC."""
+        """Genera n muestras a 1 kHz -> arreglo (n, 10) de cuentas del ADC."""
         self._filtros_musculo()
         N = n * DECIMACION
         dt = 1.0 / FS_INTERNA
@@ -207,19 +235,18 @@ class Antebrazo:
             y, self.zi_m[m] = signal.sosfilt(self.sos_m[m], ruido_blanco[:, m], zi=self.zi_m[m])
             fuentes[:, m] = y / self.norma_m[m]
         s = A_MVC * amp * self.ganancia_musculo * activ * mod * fuentes   # (N, M) voltios
-        v = (s @ self.W.T) * self.piel                                    # (N, 2)
-        v += self.rng.normal(0, 3e-6 * self.cond.ruido, (N, 2))
-        v += self.cond.interferencia_60hz * 1e-6 * np.sin(2 * np.pi * 60 * t + self.fase60)[:, None] \
-            * np.array([1.0, 0.8])
+        v = (s @ self.W.T) * self.piel                                    # (N, 10)
+        v += self.rng.normal(0, 3e-6 * self.cond.ruido, (N, NUM_CANALES))
+        v += self.cond.interferencia_60hz * 1e-6 * np.sin(2 * np.pi * 60 * t + self.fase60)[:, None] * PESO_60HZ
         if self.artefacto > 0:
             ta = self.t_artefacto + dt * np.arange(1, N + 1)
             art = self.artefacto * np.exp(-ta / 0.15) * np.sin(2 * np.pi * 4 * ta)
-            v += art[:, None] * np.array([1.0, 0.7])
+            v += art[:, None] * PESO_ARTEFACTO
             self.t_artefacto = ta[-1]
             if ta[-1] > 1.0:
                 self.artefacto = 0.0
-        salida = np.empty((n, 2))
-        for c in range(2):
+        salida = np.empty((n, NUM_CANALES))
+        for c in range(NUM_CANALES):
             y, self.zi_cadena[c] = signal.sosfilt(SOS_CADENA, v[:, c], zi=self.zi_cadena[c])
             y = np.clip(y, -7.5, 7.5)                     # rieles del TL072
             vadc = np.clip(1.65 + y[DECIMACION - 1::DECIMACION], 0.0, 3.3)  # diodos + ADC
@@ -573,7 +600,7 @@ class GemeloEnVivo:
         self.mano = ManoFisica()
         self.red = None
         self.poses = dict(ia.POSES_BASE)
-        self.senal = np.full((2000, 2), 2048, np.int16)
+        self.senal = np.full((2000, NUM_CANALES), 2048, np.int16)
         self.historial = [-1, -1, -1]
         self.ultima_clase = 0
         self.probs = np.full(ia.NUM_GESTOS, 1 / ia.NUM_GESTOS)

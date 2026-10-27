@@ -5,8 +5,8 @@ Gemelo v2: antebrazo con geometría, amplificador por etapas y calibración
 Cambios frente a simulador.py / datos_emg.py (la física muscular es la misma):
 
 1. GEOMETRÍA. Cada músculo tiene un ángulo y una profundidad en el corte del
-   antebrazo; cada par de electrodos, un ángulo y un corrimiento a lo largo
-   del brazo. El acople músculo → electrodo sale de la distancia, así que
+   antebrazo; cada uno de los 10 electrodos (5 sobre flexores, 5 sobre
+   extensores), un ángulo y un corrimiento a lo largo del brazo. El acople músculo → electrodo sale de la distancia, así que
    "recolocar electrodos" es moverlos de verdad (y se puede dibujar).
 2. AMPLIFICADOR POR ETAPAS, como el circuito real:
      electrodo (µV) → AD620 con G = 1 + 49,4 kΩ / RG → pasa-banda 16–482 Hz ×10
@@ -30,13 +30,10 @@ import ia_mano as ia
 import simulador as sm
 
 MUSCULOS = de.sm.NOMBRES_MUSCULOS
-#                 ángulo (°, 90 = dorso, 270 = palma)   profundidad (1 = bajo la piel)
-GEOMETRIA = {"FDS": (270, 0.75), "FDP": (250, 0.45), "FPL": (300, 0.50), "FCR": (315, 0.85), "FCU": (225, 0.85),
-             "EDC": (90, 0.80), "EIP": (110, 0.55), "EPL": (70, 0.50), "ECR": (45, 0.85), "ECU": (135, 0.85)}
-ANG = np.array([GEOMETRIA[m][0] for m in MUSCULOS], float)
-PROF = np.array([GEOMETRIA[m][1] for m in MUSCULOS], float)
-ELECTRODOS_NOMINAL = np.array([270.0, 90.0])          # canal 1 sobre flexores, canal 2 sobre extensores
-SIGMA_ANG, LAMBDA_PROF, PISO_CONDUCCION = 38.0, 0.35, 0.05
+ANG, PROF = sm.ANG, sm.PROF                           # geometría de los músculos (simulador.py)
+ELECTRODOS_NOMINAL = sm.ELECTRODOS_NOMINAL            # 10 electrodos: F1-F5 flexores, E1-E5 extensores
+C = sm.NUM_CANALES
+acople = sm.acople
 N_GESTOS = ia.NUM_GESTOS
 
 
@@ -65,16 +62,6 @@ def _etapa_filtro_sos():
 SOS_FILTRO = _etapa_filtro_sos()
 
 
-def acople(ang_electrodos, axial_cm, persona_dang=None):
-    """Matriz 2×10 de acople músculo → electrodo a partir de la geometría."""
-    ang = ANG + (0 if persona_dang is None else persona_dang)
-    d = (ang[None, :] - np.asarray(ang_electrodos)[:, None] + 180) % 360 - 180
-    w = np.exp(-0.5 * (d / SIGMA_ANG) ** 2) * np.exp(-(1 - PROF[None, :]) / LAMBDA_PROF)
-    w = w + PISO_CONDUCCION * np.exp(-(1 - PROF[None, :]) / LAMBDA_PROF)
-    w = w / w.max(axis=1, keepdims=True)
-    return w * np.exp(-np.abs(np.asarray(axial_cm))[:, None] / 3.0)
-
-
 class Persona(de.Persona):
     """Persona del gemelo v1 + anatomía propia (los músculos no están en el mismo ángulo en todos)."""
 
@@ -83,28 +70,30 @@ class Persona(de.Persona):
         self.dang = rng.normal(0, 8 * cond.variabilidad + 2, len(MUSCULOS))
 
     def colocar(self, rng):
-        """Una sesión: dónde quedan los electrodos, su desfase continuo y la piel de hoy."""
+        """Una sesión: dónde quedan los electrodos, su desfase continuo y la piel de hoy.
+        Al ponérselos, todos giran juntos alrededor del brazo (cómo se orientó la persona)
+        y cada uno queda además un poco corrido de su lugar."""
         d = self.cond.desplazamiento
-        ang = ELECTRODOS_NOMINAL + rng.normal(0, 30 * d + 3, 2)
-        axial = rng.normal(0, 1.5 * d + 0.2, 2)
+        ang = ELECTRODOS_NOMINAL + rng.normal(0, 30 * d + 3) + rng.normal(0, 4 * d + 1, C)
+        axial = rng.normal(0, 1.5 * d + 0.2) + rng.normal(0, 0.3 * d + 0.05, C)
         return {"angulos": ang, "axial_cm": axial, "W": acople(ang, axial, self.dang),
-                "piel": self.piel * np.exp(rng.normal(0, 0.1, 2))}
+                "piel": self.piel * np.exp(rng.normal(0, 0.1, C))}
 
 
 def sensor_por_etapas(s, ses, cond, amp, rng, desfase_v, etapas=False):
-    """Fuentes musculares (N, 10) en V a 4 kHz → cuentas del ADC (n, 2) a 1 kHz.
+    """Fuentes musculares (N, 10) en V a 4 kHz → cuentas del ADC (n, 10) a 1 kHz.
     Con etapas=True devuelve además la señal en cada etapa (a 1 kHz)."""
     N = s.shape[0]
     t = np.arange(N) / sm.FS_INTERNA
     v = (s @ ses["W"].T) * ses["piel"]
-    v += rng.normal(0, 3e-6 * cond.ruido, (N, 2))
-    v += cond.interferencia_60hz * 1e-6 * np.sin(2 * np.pi * 60 * t + rng.uniform(0, 2 * np.pi))[:, None] * np.array([1.0, 0.8])
+    v += rng.normal(0, 3e-6 * cond.ruido, (N, C))
+    v += cond.interferencia_60hz * 1e-6 * np.sin(2 * np.pi * 60 * t + rng.uniform(0, 2 * np.pi))[:, None] * sm.PESO_60HZ
     ta = np.clip(t - de.INICIO / 1000, 0, None)
-    v += (rng.uniform(0.05, 0.3) * 1e-3 * np.exp(-ta / 0.15) * np.sin(2 * np.pi * 4 * ta) * (ta > 0))[:, None] * np.array([1.0, 0.7])
+    v += (rng.uniform(0.05, 0.3) * 1e-3 * np.exp(-ta / 0.15) * np.sin(2 * np.pi * 4 * ta) * (ta > 0))[:, None] * sm.PESO_ARTEFACTO
     v_elec = v + desfase_v                                        # desfase continuo de los electrodos
     v_ad = np.clip(amp.g_ad620 * v_elec, -amp.riel_ad620_v, amp.riel_ad620_v)
     v_fil = np.empty_like(v_ad)
-    for c in range(2):
+    for c in range(C):
         zi = signal.sosfilt_zi(SOS_FILTRO) * 0                    # arranca en reposo
         v_fil[:, c] = np.clip(signal.sosfilt(SOS_FILTRO, v_ad[:, c] - v_ad[0, c], zi=zi)[0], -7.5, 7.5)
     D = sm.DECIMACION
@@ -148,7 +137,7 @@ def simular_persona(args):
     cals, sat, rep = [], 0, 0
     for s_i in range(sesiones):
         ses = p.colocar(rng)
-        desfase = rng.normal(0, amp.desfase_mv_sd * 1e-3, 2)
+        desfase = rng.normal(0, amp.desfase_mv_sd * 1e-3, C)
         sid = pid * 100 + s_i
         F_ses, saturada = [], False
         for ronda in range(rondas):
@@ -208,7 +197,7 @@ def demostracion(semilla, amp=None, nivel=None):
     cond = de.condiciones_persona(nivel, rng)
     p = Persona(cond, rng)
     ses = p.colocar(rng)
-    desfase = rng.normal(0, amp.desfase_mv_sd * 1e-3, 2)
+    desfase = rng.normal(0, amp.desfase_mv_sd * 1e-3, C)
     F_cal = []
     for g in ia.GESTOS:                                           # calibración de 20 s al encender
         cuentas, _ = sensor_por_etapas(de._fuentes(p, g, 1.0, cond.fatiga, rng), ses, cond, amp, rng, desfase)

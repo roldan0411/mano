@@ -434,7 +434,7 @@ def lanzar_app(args):
             t = np.arange(-2000, 0) / 1000
             (self.l1,) = self.ax_c1.plot(t, np.full(2000, 2048), lw=0.6, color="#185FA5")
             (self.l2,) = self.ax_c2.plot(t, np.full(2000, 2048), lw=0.6, color="#0F6E56")
-            for a, tit in ((self.ax_c1, "Canal 1 · flexores (GPIO 34)"), (self.ax_c2, "Canal 2 · extensores (GPIO 35)")):
+            for a, tit in ((self.ax_c1, "Electrodo F3 · centro de los flexores"), (self.ax_c2, "Electrodo E3 · centro de los extensores")):
                 a.set_ylim(0, 4095)
                 a.set_xlim(-2, 0)
                 a.set_title(tit, loc="left")
@@ -545,8 +545,8 @@ def lanzar_app(args):
             self.mano3d.actualizar(e["dedos"], e["muneca"])
             self.lienzo_mano.draw_idle()
             s = self.gemelo.senal
-            self.l1.set_ydata(s[:, 0])
-            self.l2.set_ydata(s[:, 1])
+            self.l1.set_ydata(s[:, ia.CANALES.index("F3")])
+            self.l2.set_ydata(s[:, ia.CANALES.index("E3")])
             for i, b in enumerate(self.barras):
                 b.set_height(e["probs"][i])
                 b.set_color("#534AB7" if ia.GESTOS[i] == e["gesto_red"] else "#B4B2A9")

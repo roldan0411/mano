@@ -19,8 +19,9 @@ y la evolución hace el resto:
   selección  las especies que más aguantan en la pista tienen más hijos;
              las que llevan muchas generaciones sin mejorar se extinguen
 
-Redes hacia adelante (sin ciclos). Nodos: 0-23 entradas, 24 sesgo,
-25-31 salidas (los 7 gestos), 32 en adelante neuronas ocultas (tanh).
+Redes hacia adelante (sin ciclos). Nodos: 0-119 entradas (40 características
+de los 10 electrodos × 3 ventanas), 120 sesgo, 121-127 salidas (los 7 gestos),
+128 en adelante neuronas ocultas (tanh).
 """
 
 import copy
@@ -29,7 +30,7 @@ import numpy as np
 
 import ia_mano as ia
 
-N_ENT, N_SAL = 24, ia.NUM_GESTOS
+N_ENT, N_SAL = 3 * ia.NUM_CARACTERISTICAS, ia.NUM_GESTOS
 SESGO = N_ENT
 SALIDAS = list(range(N_ENT + 1, N_ENT + 1 + N_SAL))
 PRIMER_OCULTO = N_ENT + 1 + N_SAL
@@ -300,7 +301,7 @@ def exportar_c(g, ruta, comentario=""):
 
     lineas = ["// Red NEAT evolucionada por el gemelo de la mano (neuroevolución, sin gradiente).",
               f"// {comentario}" if comentario else "//",
-              "// Entradas: 8 características calibradas × 3 ventanas (las mismas 24 de modelo_red_calibrado.h).",
+              f"// Entradas: {ia.NUM_CARACTERISTICAS} características calibradas de los {ia.NUM_CANALES} electrodos × 3 ventanas.",
               "// Salida: 7 puntajes (reposo, abierta, puño, pinza, señalar, flexión, extensión); gana el mayor.",
               "#pragma once", "#include <math.h>", "",
               f"#define NEAT_ENTRADAS {N_ENT}", f"#define NEAT_SALIDAS {N_SAL}", "",

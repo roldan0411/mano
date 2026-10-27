@@ -30,7 +30,7 @@ from keras import layers
 from .. import metricas
 import ia_mano as ia
 
-N_ENTRADAS = 24
+N_ENTRADAS = 3 * ia.NUM_CARACTERISTICAS          # 40 características × 3 ventanas = 120
 DISPOSITIVO = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 OPCIONES = {"h1": [16, 24, 32, 48, 64], "h2": [0, 8, 16, 24, 32], "olvido": [0.0, 0.1, 0.2],
             "l2": [0.0, 1e-5, 1e-4], "peso_pose": [0.5, 1.0, 2.0], "ruido": [0.0, 0.03, 0.08]}
