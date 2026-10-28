@@ -1,0 +1,148 @@
+{
+ "id": "A5",
+ "nombre": "Diafonía entre electrodos",
+ "grupo": "A. Gemelo digital",
+ "objetivo": "Medir cuánto se parecen las señales de electrodos vecinos (diafonía) y verificar que los 10 canales aporten información distinta.",
+ "requerimientos": [
+  "RF-02"
+ ],
+ "procedimiento": "Con las mismas sesiones de A4 se calcula la correlación de Pearson entre las envolventes (RMS cada 50 ms) de cada par de electrodos, promediada sobre personas y gestos.",
+ "criterio": "Correlación media entre vecinos menor a 0,9 (no son redundantes) y entre flexores y extensores opuestos menor a 0,5.",
+ "resultado": {
+  "vecinos_media": 0.858896,
+  "vecinos_max": 0.889215,
+  "opuestos_media": 0.03257,
+  "matriz": [
+   [
+    1.0,
+    0.849685,
+    0.608321,
+    0.508509,
+    0.458544,
+    0.094899,
+    0.03178,
+    0.045116,
+    0.131809,
+    0.342192
+   ],
+   [
+    0.849685,
+    1.0,
+    0.87323,
+    0.706184,
+    0.503138,
+    0.046197,
+    -0.007751,
+    -0.013021,
+    0.002109,
+    0.14138
+   ],
+   [
+    0.608321,
+    0.87323,
+    1.0,
+    0.889215,
+    0.620808,
+    0.066464,
+    -0.010737,
+    -0.020709,
+    -0.045993,
+    0.023731
+   ],
+   [
+    0.508509,
+    0.706184,
+    0.889215,
+    1.0,
+    0.827685,
+    0.152883,
+    0.027113,
+    -0.001583,
+    -0.03045,
+    0.022558
+   ],
+   [
+    0.458544,
+    0.503138,
+    0.620808,
+    0.827685,
+    1.0,
+    0.352075,
+    0.194854,
+    0.1042,
+    0.056945,
+    0.126861
+   ],
+   [
+    0.094899,
+    0.046197,
+    0.066464,
+    0.152883,
+    0.352075,
+    1.0,
+    0.879858,
+    0.641583,
+    0.430147,
+    0.366949
+   ],
+   [
+    0.03178,
+    -0.007751,
+    -0.010737,
+    0.027113,
+    0.194854,
+    0.879858,
+    1.0,
+    0.851278,
+    0.591276,
+    0.424849
+   ],
+   [
+    0.045116,
+    -0.013021,
+    -0.020709,
+    -0.001583,
+    0.1042,
+    0.641583,
+    0.851278,
+    1.0,
+    0.831296,
+    0.612431
+   ],
+   [
+    0.131809,
+    0.002109,
+    -0.045993,
+    -0.03045,
+    0.056945,
+    0.430147,
+    0.591276,
+    0.831296,
+    1.0,
+    0.868925
+   ],
+   [
+    0.342192,
+    0.14138,
+    0.023731,
+    0.022558,
+    0.126861,
+    0.366949,
+    0.424849,
+    0.612431,
+    0.868925,
+    1.0
+   ]
+  ]
+ },
+ "figuras": [
+  {
+   "archivo": "figuras\\A5_diafonia.png",
+   "ancho_cm": 11
+  }
+ ],
+ "cumple": true,
+ "conclusion": "Correlación media entre vecinos 0.86 (máx. 0.89); entre flexor y extensor opuestos 0.03.",
+ "fecha": "2026-10-27 15:02",
+ "duracion_s": 0.3
+}

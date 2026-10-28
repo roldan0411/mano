@@ -1,0 +1,111 @@
+{
+ "id": "C2",
+ "nombre": "Ablación: cuántos y cuáles electrodos",
+ "grupo": "C. Modelos de IA",
+ "objetivo": "Determinar cuánto aporta cada electrodo y cuántos hacen falta, como guía para el hardware.",
+ "requerimientos": [
+  "RF-02",
+  "RNF-03"
+ ],
+ "procedimiento": "Selección hacia adelante: empezando sin electrodos, en cada paso se agrega el electrodo que más sube el acierto en personas nuevas (análisis discriminante lineal, rápido y estable). Además, para cada cantidad k se promedia el acierto de 12 subconjuntos al azar de k electrodos.",
+ "criterio": "Documentar la curva y el orden de importancia; con los 10 el acierto debe ser el máximo (o a menos de 0,5 puntos).",
+ "resultado": {
+  "orden": [
+   "E4",
+   "F4",
+   "E5",
+   "F1",
+   "F3",
+   "E3",
+   "E1",
+   "F2",
+   "E2",
+   "F5"
+  ],
+  "curva_adelante": [
+   0.832682,
+   0.951581,
+   0.967187,
+   0.970573,
+   0.973847,
+   0.973605,
+   0.975725,
+   0.975874,
+   0.97567,
+   0.975316
+  ],
+  "azar": [
+   {
+    "k": 1,
+    "media": 0.703361,
+    "min": 0.604464,
+    "max": 0.802046
+   },
+   {
+    "k": 2,
+    "media": 0.859465,
+    "min": 0.741611,
+    "max": 0.938988
+   },
+   {
+    "k": 3,
+    "media": 0.933896,
+    "min": 0.888858,
+    "max": 0.954241
+   },
+   {
+    "k": 4,
+    "media": 0.948613,
+    "min": 0.891462,
+    "max": 0.970871
+   },
+   {
+    "k": 5,
+    "media": 0.966075,
+    "min": 0.956548,
+    "max": 0.973847
+   },
+   {
+    "k": 6,
+    "media": 0.972109,
+    "min": 0.965272,
+    "max": 0.976042
+   },
+   {
+    "k": 7,
+    "media": 0.971982,
+    "min": 0.966034,
+    "max": 0.975688
+   },
+   {
+    "k": 8,
+    "media": 0.974327,
+    "min": 0.970294,
+    "max": 0.976302
+   },
+   {
+    "k": 9,
+    "media": 0.974704,
+    "min": 0.97247,
+    "max": 0.97567
+   },
+   {
+    "k": 10,
+    "media": 0.975316,
+    "min": 0.975316,
+    "max": 0.975316
+   }
+  ],
+  "k_para_99pct_del_maximo": 3
+ },
+ "figuras": [
+  {
+   "archivo": "figuras\\C2_ablacion.png",
+   "ancho_cm": 16
+  }
+ ],
+ "cumple": true,
+ "conclusion": "Orden de importancia: E4, F4, E5, F1, F3, E3, E1, F2, E2, F5. Con 3 electrodos bien elegidos se llega al 99 % del máximo; con 2 al azar el acierto medio es 85.9 % y con los 10, 97.5 % (LDA).",
+ "fecha": "2026-10-27 16:47",
+ "duracion_s": 83.0
+}

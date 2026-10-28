@@ -13,6 +13,8 @@ Una mano CHOCA cuando hace el gesto equivocado durante medio segundo seguido
 todavía no llegó) no cuentan ni a favor ni en contra.
 """
 
+from dataclasses import replace
+
 import numpy as np
 
 import ia_mano as ia
@@ -34,26 +36,53 @@ def _orden(rng):
             return o
 
 
-def recorrido(semilla, senal=False):
+def recorrido(semilla, senal=False, ajustes=None, crudo=False):
+    """Una persona y su pista. ajustes (para las pruebas de robustez):
+         nivel      nivel de dificultad fijo (0 a 4)
+         ruido      multiplica el ruido de los electrodos
+         fatiga     fatiga fija (0 a 1)
+         giro_antes_deg  los electrodos quedaron girados este ángulo ANTES de calibrar
+         giro_deg   los 10 electrodos giran juntos este ángulo DESPUÉS de calibrar
+         axial_cm   y se corren esto a lo largo del brazo
+         apagados   electrodos (índices) que se despegan después de calibrar
+       crudo=True devuelve además las ventanas crudas de la pista y de la calibración."""
+    a = ajustes or {}
     rng = np.random.default_rng(semilla)
     amp = gemelo2.Amplificador()
     nivel = int(rng.integers(0, len(sm.NIVELES)))
+    nivel = a.get("nivel", nivel)
     cond = de.condiciones_persona(nivel, rng)
+    if "ruido" in a:
+        cond = replace(cond, ruido=cond.ruido * a["ruido"])
+    if "fatiga" in a:
+        cond = replace(cond, fatiga=float(a["fatiga"]))
     p = gemelo2.Persona(cond, rng)
     ses = p.colocar(rng)
+    if a.get("giro_antes_deg"):                                   # se pusieron girados, pero calibró así
+        ses = dict(ses, W=sm.acople(ses["angulos"] + a["giro_antes_deg"], ses["axial_cm"], p.dang))
     desfase = rng.normal(0, amp.desfase_mv_sd * 1e-3, sm.NUM_CANALES)
-    F_cal = []
+    F_cal, x_cal = [], []
     for g in ia.GESTOS:                                           # calibración de 20 s al ponerse los electrodos
         cuentas, _ = gemelo2.sensor_por_etapas(de._fuentes(p, g, 1.0, cond.fatiga, rng), ses, cond, amp, rng, desfase)
-        F_cal.append(ia.caracteristicas_lote(de._ventanas(cuentas)))
+        x_cal.append(de._ventanas(cuentas))
+        F_cal.append(ia.caracteristicas_lote(x_cal[-1]))
     cal = gemelo2.calibracion(np.concatenate(F_cal))
-    F, gesto, pose, vidx, adc = [], [], [], [], []
+    if a.get("giro_deg") or a.get("axial_cm"):                     # se corren después de calibrar
+        ses = dict(ses, W=sm.acople(ses["angulos"] + a.get("giro_deg", 0.0), ses["axial_cm"] + a.get("axial_cm", 0.0), p.dang))
+    apagados = list(a.get("apagados", ()))
+    F, gesto, pose, vidx, adc, x_pista = [], [], [], [], [], []
     for b, gi in enumerate(_orden(rng)):
         g = ia.GESTOS[gi]
         inten = gemelo2._intensidad(g, rng, 1)
         fatiga = min(1.0, cond.fatiga + 0.01 * b)
         r = gemelo2.sensor_por_etapas(de._fuentes(p, g, inten, fatiga, rng), ses, cond, amp, rng, desfase, etapas=senal)
-        F.append(ia.caracteristicas_lote(de._ventanas(r[0])[:VENTANAS]))
+        cuentas = r[0]
+        if apagados:                                              # electrodo suelto: el ADC queda en la mitad, con su ruido
+            cuentas = cuentas.copy()
+            cuentas[:, apagados] = np.clip(np.round(2048 + rng.normal(0, 1.5, (len(cuentas), len(apagados)))), 0, 4095)
+        x = de._ventanas(cuentas)[:VENTANAS]
+        x_pista.append(x)
+        F.append(ia.caracteristicas_lote(x))
         gesto += [gi] * VENTANAS
         amp_pose = 0.0 if g == "reposo" else min(1.0, inten)
         pose.append(de.POSE_REPOSO + (amp_pose * de.PROGRESO_VENTANA[:VENTANAS])[:, None] * (de.POSES_6[gi] - de.POSE_REPOSO))
@@ -66,6 +95,8 @@ def recorrido(semilla, senal=False):
          "estable": de.PROGRESO_VENTANA[vidx] >= 0.9, "nivel": nivel + 1, "semilla": semilla}
     if senal:
         d["adc"] = np.concatenate(adc).astype(np.float32)
+    if crudo:
+        d.update(x=np.concatenate(x_pista), x_cal=np.concatenate(x_cal), ventana_idx=vidx, cal=cal)
     return d
 
 

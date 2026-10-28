@@ -1,0 +1,96 @@
+{
+ "id": "C5",
+ "nombre": "Falla de un electrodo",
+ "grupo": "C. Modelos de IA",
+ "objetivo": "Medir qué pasa si un electrodo se despega durante el uso y probar una mitigación: entrenar con electrodos apagados al azar.",
+ "requerimientos": [
+  "RNF-03"
+ ],
+ "procedimiento": "Para cada uno de los 10 electrodos se simulan 8 personas nuevas a las que ese electrodo se les despega después de calibrar (el ADC queda plano, solo ruido). Se evalúa la campeona y dos MLP iguales entrenados con los datos del motor: uno normal y otro con «electrodo despegado» simulado al azar en el 30 % de las ventanas de entrenamiento.",
+ "criterio": "Con cualquier electrodo despegado, acierto ≥ 80 % (RNF-03).",
+ "resultado": {
+  "por_electrodo": [
+   {
+    "electrodo": "F1",
+    "campeona": 0.497874,
+    "mlp_normal": 0.573129,
+    "mlp_con_apagados": 0.982143
+   },
+   {
+    "electrodo": "F2",
+    "campeona": 0.333333,
+    "mlp_normal": 0.432823,
+    "mlp_con_apagados": 0.988946
+   },
+   {
+    "electrodo": "F3",
+    "campeona": 0.437925,
+    "mlp_normal": 0.556973,
+    "mlp_con_apagados": 0.994048
+   },
+   {
+    "electrodo": "F4",
+    "campeona": 0.803146,
+    "mlp_normal": 0.610119,
+    "mlp_con_apagados": 0.992347
+   },
+   {
+    "electrodo": "F5",
+    "campeona": 0.462585,
+    "mlp_normal": 0.56165,
+    "mlp_con_apagados": 0.993197
+   },
+   {
+    "electrodo": "E1",
+    "campeona": 0.424745,
+    "mlp_normal": 0.570153,
+    "mlp_con_apagados": 0.977891
+   },
+   {
+    "electrodo": "E2",
+    "campeona": 0.267432,
+    "mlp_normal": 0.557398,
+    "mlp_con_apagados": 0.994898
+   },
+   {
+    "electrodo": "E3",
+    "campeona": 0.437075,
+    "mlp_normal": 0.428571,
+    "mlp_con_apagados": 0.984694
+   },
+   {
+    "electrodo": "E4",
+    "campeona": 0.428571,
+    "mlp_normal": 0.289116,
+    "mlp_con_apagados": 0.990646
+   },
+   {
+    "electrodo": "E5",
+    "campeona": 0.399235,
+    "mlp_normal": 0.432398,
+    "mlp_con_apagados": 0.992347
+   }
+  ],
+  "sin_falla": {
+   "campeona": 0.996173,
+   "mlp_normal": 0.996173,
+   "mlp_con_apagados": 0.993197
+  },
+  "peor": {
+   "campeona": 0.267432,
+   "mlp_normal": 0.289116,
+   "mlp_con_apagados": 0.977891
+  },
+  "campeona_id": 7
+ },
+ "figuras": [
+  {
+   "archivo": "figuras\\C5_falla_electrodo.png",
+   "ancho_cm": 16
+  }
+ ],
+ "cumple": false,
+ "conclusion": "Peor caso con un electrodo despegado: campeona 27 %, MLP normal 29 %, MLP entrenado con electrodos apagados 98 % (sin falla: 100 / 100 / 99 %).",
+ "fecha": "2026-10-27 16:48",
+ "duracion_s": 73.4
+}

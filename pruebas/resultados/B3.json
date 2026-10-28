@@ -1,0 +1,51 @@
+{
+ "id": "B3",
+ "nombre": "Largo de la ventana: acierto frente a retardo",
+ "grupo": "B. Procesamiento de la señal",
+ "objetivo": "Elegir el largo de la ventana de análisis: una ventana más larga da características más estables, pero la decisión llega más tarde.",
+ "requerimientos": [
+  "RF-04",
+  "RNF-04"
+ ],
+ "procedimiento": "Con la señal cruda guardada (10 electrodos) se recalculan las características usando las últimas L muestras de cada ventana (L = 50, 100, 150 y 200 ms), con su calibración por sesión y contexto de 3 ventanas, y se entrena el mismo MLP (3 particiones por persona). El retardo que agrega la ventana es L/2 (retardo de grupo de un promedio móvil).",
+ "criterio": "Documentar la curva; la ventana de 200 ms debe quedar dentro del 1 % del mejor acierto.",
+ "resultado": {
+  "tabla": [
+   {
+    "ventana_ms": 50,
+    "acierto": 0.969813,
+    "sd": 0.006426,
+    "retardo_ms": 25.0
+   },
+   {
+    "ventana_ms": 100,
+    "acierto": 0.977448,
+    "sd": 0.004948,
+    "retardo_ms": 50.0
+   },
+   {
+    "ventana_ms": 150,
+    "acierto": 0.978706,
+    "sd": 0.005267,
+    "retardo_ms": 75.0
+   },
+   {
+    "ventana_ms": 200,
+    "acierto": 0.976757,
+    "sd": 0.004754,
+    "retardo_ms": 100.0
+   }
+  ],
+  "n_ventanas": 75264
+ },
+ "figuras": [
+  {
+   "archivo": "figuras\\B3_ventana.png",
+   "ancho_cm": 11
+  }
+ ],
+ "cumple": true,
+ "conclusion": "50 ms: 97.0 %; 100 ms: 97.7 %; 150 ms: 97.9 %; 200 ms: 97.7 %. Con 200 ms la decisión se retrasa 100 ms por la ventana.",
+ "fecha": "2026-10-27 15:06",
+ "duracion_s": 30.9
+}

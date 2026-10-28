@@ -22,7 +22,6 @@ import queue
 import threading
 import time
 import traceback
-from concurrent.futures import ProcessPoolExecutor
 from dataclasses import asdict
 from pathlib import Path
 
@@ -51,6 +50,16 @@ CADA_INMIGRANTE = 12            # cada 12 generaciones entra una mano nueva al a
 MEJORA_CAMPEONA = 0.003         # el puntaje debe superar a la campeona por esto
 
 
+def motivo_pausa(salud, dispositivo):
+    """Por qué el motor no debe entrenar ahora (None si puede seguir)."""
+    # la GPU se puede colgar si se desconecta el cargador en pleno entrenamiento; en la CPU no hay ese riesgo
+    if not salud["cargador"] and dispositivo != "cpu":
+        return "se desconectó el cargador (en batería Windows apaga la GPU); conéctalo para seguir"
+    if salud["ram_libre_gb"] < 1.2:
+        return f"solo hay {salud['ram_libre_gb']} GB de RAM libre"
+    return None
+
+
 class Motor:
     def __init__(self, salida=None, entrada=None):
         config.crear_carpetas()
@@ -59,7 +68,7 @@ class Motor:
         self.rng = np.random.default_rng(int(time.time()))
         self.gen_torch = torch.Generator(device=DISPOSITIVO).manual_seed(int(time.time()))
         self.amp = self._cargar_amplificador()
-        self.pool = ProcessPoolExecutor(max_workers=4)
+        self.pool = config.pool_vigilado(4)            # si el motor muere, no quedan huérfanos
         self.pausa, self.detener = False, False
         self.eventos, self.en_vuelo, self.demo_futura = [], [], None
         self.manos, self.version_demo = [], 0
@@ -331,11 +340,7 @@ class Motor:
             ultimo = 0.0
             while not self.detener:
                 self.atender()
-                s = self.salud()
-                # la GPU se puede colgar si se desconecta el cargador en pleno entrenamiento; en la CPU no hay ese riesgo
-                motivo = (None if s["cargador"] or DISPOSITIVO.type == "cpu"
-                          else "se desconectó el cargador (en batería Windows apaga la GPU); conéctalo para seguir")
-                motivo = motivo or (f"solo hay {s['ram_libre_gb']} GB de RAM libre" if s["ram_libre_gb"] < 1.2 else None)
+                motivo = motivo_pausa(self.salud(), DISPOSITIVO.type)
                 if self.pausa or motivo:
                     if time.time() - ultimo > 5:              # en pausa la ventana sigue mostrando todo lo guardado
                         self._publicar(self._ranking(), 0.0, fase="pausa", mensaje="En pausa" + (f": {motivo}" if motivo else ""))

@@ -57,3 +57,35 @@ def _a_json(o):
     if isinstance(o, Path):
         return str(o)
     raise TypeError(type(o))
+
+
+def vigilar_padre(pid, creado):
+    """Para los procesos de simulación (initializer del ProcessPoolExecutor): si el proceso que los
+    creó muere, terminan solos. Sin esto, cerrar el motor a la fuerza los dejaba huérfanos."""
+    import os
+    import threading
+    import time
+
+    import psutil
+
+    def vigilar():
+        while True:
+            try:
+                vivo = psutil.Process(pid).create_time() == creado
+            except psutil.Error:
+                vivo = False
+            if not vivo:
+                os._exit(0)
+            time.sleep(2)
+
+    threading.Thread(target=vigilar, daemon=True, name="vigilar-padre").start()
+
+
+def pool_vigilado(procesos):
+    """ProcessPoolExecutor cuyos procesos se cierran solos si muere el que los creó."""
+    import os
+    from concurrent.futures import ProcessPoolExecutor
+
+    import psutil
+    yo = os.getpid()
+    return ProcessPoolExecutor(max_workers=procesos, initializer=vigilar_padre, initargs=(yo, psutil.Process(yo).create_time()))

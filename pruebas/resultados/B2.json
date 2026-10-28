@@ -1,0 +1,59 @@
+{
+ "id": "B2",
+ "nombre": "Efecto de la calibración de la sesión",
+ "grupo": "B. Procesamiento de la señal",
+ "objetivo": "Medir cuánto mejora el reconocimiento en personas nuevas al expresar las características relativas a la calibración de 20 s de cada sesión.",
+ "requerimientos": [
+  "RF-05",
+  "RNF-01"
+ ],
+ "procedimiento": "Con los datos guardados por el motor se separa el 20 % de las personas para prueba (5 particiones distintas). Se entrena el mismo MLP (120-64-32-7) con dos entradas: (a) log(1 + F) con contexto, sin calibrar; (b) log(1 + F) − calibración de la sesión, con contexto. Se compara el acierto en las personas de prueba.",
+ "criterio": "La calibración mejora el acierto en personas nuevas en todas las particiones.",
+ "resultado": {
+  "particiones": [
+   {
+    "semilla": 0,
+    "sin_calibrar": 0.969099,
+    "calibrado": 0.98398
+   },
+   {
+    "semilla": 1,
+    "sin_calibrar": 0.962449,
+    "calibrado": 0.985747
+   },
+   {
+    "semilla": 2,
+    "sin_calibrar": 0.961961,
+    "calibrado": 0.984305
+   },
+   {
+    "semilla": 3,
+    "sin_calibrar": 0.975539,
+    "calibrado": 0.989072
+   },
+   {
+    "semilla": 4,
+    "sin_calibrar": 0.965797,
+    "calibrado": 0.991095
+   }
+  ],
+  "sin_calibrar_media": 0.966969,
+  "calibrado_media": 0.98684,
+  "mejora_media_pp": 1.987072,
+  "mejora_min_pp": 1.353237,
+  "cal_shape": [
+   322560,
+   40
+  ]
+ },
+ "figuras": [
+  {
+   "archivo": "figuras\\B2_calibracion.png",
+   "ancho_cm": 10
+  }
+ ],
+ "cumple": true,
+ "conclusion": "Acierto en personas nuevas: 96.7 % sin calibrar → 98.7 % calibrado (+2.0 puntos; mejora en 5 de 5 particiones).",
+ "fecha": "2026-10-27 15:06",
+ "duracion_s": 21.5
+}

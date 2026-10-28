@@ -1,0 +1,121 @@
+{
+ "id": "A1",
+ "nombre": "Acople músculo–electrodo",
+ "grupo": "A. Gemelo digital",
+ "objetivo": "Verificar que cada uno de los 10 electrodos capte sobre todo los músculos que tiene debajo, según la geometría del antebrazo.",
+ "requerimientos": [
+  "RF-01",
+  "RF-02"
+ ],
+ "procedimiento": "Se calcula la matriz de acople W (10 electrodos × 10 músculos) en la posición nominal: w = exp(−Δθ²/2σ²)·exp(−(1−p)/λ) + piso, normalizada por electrodo. Para cada electrodo se identifica el músculo de mayor acople y se compara con el músculo superficial (p ≥ 0,75) angularmente más cercano. Se mide además cuánto cambia W al girar todos los electrodos 15°.",
+ "criterio": "Los 10 electrodos captan como máximo un músculo de su propio grupo (flexor o extensor) y ese músculo es el superficial más cercano.",
+ "resultado": {
+  "electrodos": [
+   {
+    "electrodo": "F1",
+    "angulo": 210.0,
+    "musculo_max": "FCU",
+    "acople_max": 1.0,
+    "superficial_mas_cercano": "FCU",
+    "grupo_correcto": true,
+    "propio_vs_opuesto": 4.461669
+   },
+   {
+    "electrodo": "F2",
+    "angulo": 240.0,
+    "musculo_max": "FCU",
+    "acople_max": 1.0,
+    "superficial_mas_cercano": "FCU",
+    "grupo_correcto": true,
+    "propio_vs_opuesto": 10.665519
+   },
+   {
+    "electrodo": "F3",
+    "angulo": 270.0,
+    "musculo_max": "FDS",
+    "acople_max": 1.0,
+    "superficial_mas_cercano": "FDS",
+    "grupo_correcto": true,
+    "propio_vs_opuesto": 13.188248
+   },
+   {
+    "electrodo": "F4",
+    "angulo": 300.0,
+    "musculo_max": "FCR",
+    "acople_max": 1.0,
+    "superficial_mas_cercano": "FCR",
+    "grupo_correcto": true,
+    "propio_vs_opuesto": 11.101234
+   },
+   {
+    "electrodo": "F5",
+    "angulo": 330.0,
+    "musculo_max": "FCR",
+    "acople_max": 1.0,
+    "superficial_mas_cercano": "FCR",
+    "grupo_correcto": true,
+    "propio_vs_opuesto": 4.770916
+   },
+   {
+    "electrodo": "E1",
+    "angulo": 30.0,
+    "musculo_max": "ECR",
+    "acople_max": 1.0,
+    "superficial_mas_cercano": "ECR",
+    "grupo_correcto": true,
+    "propio_vs_opuesto": 4.781275
+   },
+   {
+    "electrodo": "E2",
+    "angulo": 60.0,
+    "musculo_max": "ECR",
+    "acople_max": 1.0,
+    "superficial_mas_cercano": "ECR",
+    "grupo_correcto": true,
+    "propio_vs_opuesto": 12.292302
+   },
+   {
+    "electrodo": "E3",
+    "angulo": 90.0,
+    "musculo_max": "EDC",
+    "acople_max": 1.0,
+    "superficial_mas_cercano": "EDC",
+    "grupo_correcto": true,
+    "propio_vs_opuesto": 15.542253
+   },
+   {
+    "electrodo": "E4",
+    "angulo": 120.0,
+    "musculo_max": "ECU",
+    "acople_max": 1.0,
+    "superficial_mas_cercano": "ECU",
+    "grupo_correcto": true,
+    "propio_vs_opuesto": 12.55121
+   },
+   {
+    "electrodo": "E5",
+    "angulo": 150.0,
+    "musculo_max": "ECU",
+    "acople_max": 1.0,
+    "superficial_mas_cercano": "ECU",
+    "grupo_correcto": true,
+    "propio_vs_opuesto": 5.041847
+   }
+  ],
+  "aciertos": 10,
+  "cambio_W_giro15_pct": 23.450477,
+  "sigma_ang_deg": 38.0,
+  "lambda_prof": 0.35,
+  "piso": 0.05
+ },
+ "figuras": [
+  {
+   "archivo": "figuras\\A1_acople.png",
+   "ancho_cm": 16
+  }
+ ],
+ "cumple": true,
+ "conclusion": "10 de 10 electrodos captan como máximo el músculo superficial más cercano de su grupo; girar los electrodos 15° cambia el 23 % del acople.",
+ "fecha": "2026-10-27 15:02",
+ "duracion_s": 0.4
+}

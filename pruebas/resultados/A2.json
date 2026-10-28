@@ -1,0 +1,90 @@
+{
+ "id": "A2",
+ "nombre": "Ganancia y saturación del AD620",
+ "grupo": "A. Gemelo digital",
+ "objetivo": "Verificar que la etapa del amplificador de instrumentación del gemelo cumpla G = 1 + 49,4 kΩ/RG y que modele la saturación por el desfase de los electrodos.",
+ "requerimientos": [
+  "RF-03"
+ ],
+ "procedimiento": "Para 9 valores de RG entre 100 Ω y 10 kΩ se simula una sesión y se mide la ganancia como la pendiente entre la salida del AD620 y la señal del electrodo (regresión lineal en las muestras no saturadas). Se calcula además el desfase máximo que tolera cada ganancia antes de llegar al riel (6,1 V).",
+ "criterio": "Error de ganancia menor a 1 % para todos los RG; la saturación aparece cuando G·desfase supera el riel.",
+ "resultado": {
+  "tabla": [
+   {
+    "rg_ohm": 100.0,
+    "g_formula": 495.0,
+    "g_medida": 494.994415,
+    "error_pct": 0.001128,
+    "desfase_max_mv": 12.323232
+   },
+   {
+    "rg_ohm": 177.827941,
+    "g_formula": 278.796615,
+    "g_medida": 278.793469,
+    "error_pct": 0.001128,
+    "desfase_max_mv": 21.879749
+   },
+   {
+    "rg_ohm": 316.227766,
+    "g_formula": 157.216516,
+    "g_medida": 157.214743,
+    "error_pct": 0.001128,
+    "desfase_max_mv": 38.799995
+   },
+   {
+    "rg_ohm": 562.341325,
+    "g_formula": 88.847003,
+    "g_medida": 88.846,
+    "error_pct": 0.001128,
+    "desfase_max_mv": 68.657353
+   },
+   {
+    "rg_ohm": 1000.0,
+    "g_formula": 50.4,
+    "g_medida": 50.399431,
+    "error_pct": 0.001128,
+    "desfase_max_mv": 121.031746
+   },
+   {
+    "rg_ohm": 1778.27941,
+    "g_formula": 28.779661,
+    "g_medida": 28.779337,
+    "error_pct": 0.001128,
+    "desfase_max_mv": 211.955238
+   },
+   {
+    "rg_ohm": 3162.27766,
+    "g_formula": 16.621652,
+    "g_medida": 16.621464,
+    "error_pct": 0.001128,
+    "desfase_max_mv": 366.991207
+   },
+   {
+    "rg_ohm": 5623.413252,
+    "g_formula": 9.7847,
+    "g_medida": 9.78459,
+    "error_pct": 0.001128,
+    "desfase_max_mv": 623.422264
+   },
+   {
+    "rg_ohm": 10000.0,
+    "g_formula": 5.94,
+    "g_medida": 5.939933,
+    "error_pct": 0.001128,
+    "desfase_max_mv": 1026.936027
+   }
+  ],
+  "error_max_pct": 0.001128,
+  "satura_con_rg100_desfase40mv": true
+ },
+ "figuras": [
+  {
+   "archivo": "figuras\\A2_ad620.png",
+   "ancho_cm": 16
+  }
+ ],
+ "cumple": true,
+ "conclusion": "Error máximo de ganancia 0.001 %; con RG = 100 Ω y desfase de ±40 mV el AD620 satura, como predice G·desfase > 6,1 V.",
+ "fecha": "2026-10-27 15:02",
+ "duracion_s": 0.5
+}

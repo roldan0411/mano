@@ -1,0 +1,216 @@
+{
+ "id": "C4",
+ "nombre": "Robustez: desplazamiento, ruido y fatiga",
+ "grupo": "C. Modelos de IA",
+ "objetivo": "Medir cuánto se degrada la campeona cuando los electrodos se corren después de calibrar, cuando hay más ruido o fatiga, y cuánto se recupera al volver a calibrar.",
+ "requerimientos": [
+  "RF-05",
+  "RNF-02"
+ ],
+ "procedimiento": "Se simulan 8 personas nuevas (nivel de dificultad 2) por condición, cada una con la pista de 21 gestos. Se barre: giro de los 10 electrodos después de calibrar (0–30°), corrimiento a lo largo del brazo (0–2 cm), ruido de los electrodos (×1 a ×5) y fatiga (0 a 0,9). Para el giro se repite con los electrodos ya girados al calibrar (recalibración).",
+ "criterio": "Acierto ≥ 85 % con giro de 10° sin recalibrar, ruido ×3 y fatiga 0,6; con recalibración ≥ 95 % para todos los giros.",
+ "resultado": {
+  "campeona": 7,
+  "giro": [
+   {
+    "condicion": "giro 0° sin recalibrar",
+    "nivel": 1,
+    "giro_deg": 0,
+    "acierto": 0.99915,
+    "sd_personas": 0.001473
+   },
+   {
+    "condicion": "giro 5° sin recalibrar",
+    "nivel": 1,
+    "giro_deg": 5,
+    "acierto": 0.996599,
+    "sd_personas": 0.005641
+   },
+   {
+    "condicion": "giro 10° sin recalibrar",
+    "nivel": 1,
+    "giro_deg": 10,
+    "acierto": 0.972789,
+    "sd_personas": 0.041449
+   },
+   {
+    "condicion": "giro 15° sin recalibrar",
+    "nivel": 1,
+    "giro_deg": 15,
+    "acierto": 0.940476,
+    "sd_personas": 0.059402
+   },
+   {
+    "condicion": "giro 20° sin recalibrar",
+    "nivel": 1,
+    "giro_deg": 20,
+    "acierto": 0.895408,
+    "sd_personas": 0.084364
+   },
+   {
+    "condicion": "giro 30° sin recalibrar",
+    "nivel": 1,
+    "giro_deg": 30,
+    "acierto": 0.771259,
+    "sd_personas": 0.11273
+   }
+  ],
+  "recalibrado": [
+   {
+    "condicion": "giro 0° recalibrado",
+    "nivel": 1,
+    "giro_antes_deg": 0,
+    "acierto": 0.99915,
+    "sd_personas": 0.001473
+   },
+   {
+    "condicion": "giro 5° recalibrado",
+    "nivel": 1,
+    "giro_antes_deg": 5,
+    "acierto": 0.998724,
+    "sd_personas": 0.001647
+   },
+   {
+    "condicion": "giro 10° recalibrado",
+    "nivel": 1,
+    "giro_antes_deg": 10,
+    "acierto": 0.99915,
+    "sd_personas": 0.001473
+   },
+   {
+    "condicion": "giro 15° recalibrado",
+    "nivel": 1,
+    "giro_antes_deg": 15,
+    "acierto": 0.999575,
+    "sd_personas": 0.001125
+   },
+   {
+    "condicion": "giro 20° recalibrado",
+    "nivel": 1,
+    "giro_antes_deg": 20,
+    "acierto": 0.998299,
+    "sd_personas": 0.001701
+   },
+   {
+    "condicion": "giro 30° recalibrado",
+    "nivel": 1,
+    "giro_antes_deg": 30,
+    "acierto": 0.985969,
+    "sd_personas": 0.02848
+   }
+  ],
+  "axial": [
+   {
+    "condicion": "corrimiento 0 cm",
+    "nivel": 1,
+    "axial_cm": 0,
+    "acierto": 0.99915,
+    "sd_personas": 0.001473
+   },
+   {
+    "condicion": "corrimiento 0.5 cm",
+    "nivel": 1,
+    "axial_cm": 0.5,
+    "acierto": 0.998299,
+    "sd_personas": 0.002405
+   },
+   {
+    "condicion": "corrimiento 1 cm",
+    "nivel": 1,
+    "axial_cm": 1,
+    "acierto": 0.997024,
+    "sd_personas": 0.002655
+   },
+   {
+    "condicion": "corrimiento 1.5 cm",
+    "nivel": 1,
+    "axial_cm": 1.5,
+    "acierto": 0.992347,
+    "sd_personas": 0.006749
+   },
+   {
+    "condicion": "corrimiento 2 cm",
+    "nivel": 1,
+    "axial_cm": 2,
+    "acierto": 0.978316,
+    "sd_personas": 0.016039
+   }
+  ],
+  "ruido": [
+   {
+    "condicion": "ruido ×1",
+    "nivel": 1,
+    "ruido": 1,
+    "acierto": 0.99915,
+    "sd_personas": 0.001473
+   },
+   {
+    "condicion": "ruido ×2",
+    "nivel": 1,
+    "ruido": 2,
+    "acierto": 0.998299,
+    "sd_personas": 0.001701
+   },
+   {
+    "condicion": "ruido ×3",
+    "nivel": 1,
+    "ruido": 3,
+    "acierto": 0.997874,
+    "sd_personas": 0.002367
+   },
+   {
+    "condicion": "ruido ×5",
+    "nivel": 1,
+    "ruido": 5,
+    "acierto": 0.994898,
+    "sd_personas": 0.003803
+   }
+  ],
+  "fatiga": [
+   {
+    "condicion": "fatiga 0.0",
+    "nivel": 1,
+    "fatiga": 0.0,
+    "acierto": 0.997874,
+    "sd_personas": 0.002367
+   },
+   {
+    "condicion": "fatiga 0.3",
+    "nivel": 1,
+    "fatiga": 0.3,
+    "acierto": 0.99915,
+    "sd_personas": 0.001473
+   },
+   {
+    "condicion": "fatiga 0.6",
+    "nivel": 1,
+    "fatiga": 0.6,
+    "acierto": 0.99915,
+    "sd_personas": 0.001473
+   },
+   {
+    "condicion": "fatiga 0.9",
+    "nivel": 1,
+    "fatiga": 0.9,
+    "acierto": 0.998724,
+    "sd_personas": 0.001647
+   }
+  ],
+  "criterios": {
+   "giro10": true,
+   "ruido3": true,
+   "fatiga06": true,
+   "recal": true
+  }
+ },
+ "figuras": [
+  {
+   "archivo": "figuras\\C4_robustez.png",
+   "ancho_cm": 16
+  }
+ ],
+ "cumple": true,
+ "conclusion": "Giro sin recalibrar: 97 % a 10° y 77 % a 30°; recalibrando: ≥ 99 %. Ruido ×3: 100 %; fatiga 0,6: 100 %; corrimiento 2 cm: 98 %.",
+ "fecha": "2026-10-27 16:45",
+ "duracion_s": 60.0
+}

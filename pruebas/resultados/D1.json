@@ -1,0 +1,88 @@
+{
+ "id": "D1",
+ "nombre": "El firmware da lo mismo que Python",
+ "grupo": "D. Embebido (ESP32)",
+ "objetivo": "Verificar que el procesamiento del firmware (características de los 10 electrodos, calibración, contexto) y las redes exportadas a C den exactamente lo mismo que el gemelo en Python.",
+ "requerimientos": [
+  "RF-12",
+  "RNF-05"
+ ],
+ "procedimiento": "Se compila en el PC (compilador zig cc, C99, -O2) un programa que incluye los mismos archivos del firmware: procesamiento_emg.h, modelo_red_calibrado.h de la campeona y red_neat.h del campeón NEAT. Se le pasan las ventanas crudas (cuentas del ADC) de la calibración y de la pista de 5 personas simuladas y se compara, ventana por ventana, con Python.",
+ "criterio": "Mismo gesto en el 100 % de las ventanas (red y NEAT); características con diferencia relativa < 1e-4; entradas, confianza y puntajes con diferencia < 1e-3.",
+ "resultado": {
+  "personas": [
+   {
+    "persona": 0,
+    "ventanas": 294,
+    "dif_rel_caracteristicas": 2e-06,
+    "dif_calibracion": 0.0,
+    "dif_entradas": 2e-06,
+    "mismo_gesto_red": 1.0,
+    "dif_confianza": 2e-06,
+    "mismo_gesto_neat": 1.0,
+    "dif_neat": 7e-06
+   },
+   {
+    "persona": 1,
+    "ventanas": 294,
+    "dif_rel_caracteristicas": 2e-06,
+    "dif_calibracion": 0.0,
+    "dif_entradas": 2e-06,
+    "mismo_gesto_red": 1.0,
+    "dif_confianza": 3e-06,
+    "mismo_gesto_neat": 1.0,
+    "dif_neat": 8e-06
+   },
+   {
+    "persona": 2,
+    "ventanas": 294,
+    "dif_rel_caracteristicas": 2e-06,
+    "dif_calibracion": 0.0,
+    "dif_entradas": 2e-06,
+    "mismo_gesto_red": 1.0,
+    "dif_confianza": 1e-06,
+    "mismo_gesto_neat": 1.0,
+    "dif_neat": 9e-06
+   },
+   {
+    "persona": 3,
+    "ventanas": 294,
+    "dif_rel_caracteristicas": 2e-06,
+    "dif_calibracion": 0.0,
+    "dif_entradas": 2e-06,
+    "mismo_gesto_red": 1.0,
+    "dif_confianza": 1e-06,
+    "mismo_gesto_neat": 1.0,
+    "dif_neat": 9e-06
+   },
+   {
+    "persona": 4,
+    "ventanas": 294,
+    "dif_rel_caracteristicas": 2e-06,
+    "dif_calibracion": 0.0,
+    "dif_entradas": 2e-06,
+    "mismo_gesto_red": 1.0,
+    "dif_confianza": 5e-06,
+    "mismo_gesto_neat": 1.0,
+    "dif_neat": 6e-06
+   }
+  ],
+  "peor": {
+   "dif_rel_caracteristicas": 2e-06,
+   "dif_calibracion": 0.0,
+   "dif_entradas": 2e-06,
+   "mismo_gesto_red": 1.0,
+   "dif_confianza": 5e-06,
+   "mismo_gesto_neat": 1.0,
+   "dif_neat": 9e-06
+  },
+  "campeona": 7,
+  "campeon_neat": 17,
+  "compilador": "zig cc (ziglang 0.16.0), C99, -O2"
+ },
+ "figuras": [],
+ "cumple": true,
+ "conclusion": "1470 ventanas: mismo gesto en el 100 % (red) y 100 % (NEAT); diferencias máximas: características 2.1e-06, entradas 2.0e-06, confianza 5.5e-06, NEAT 9.1e-06.",
+ "fecha": "2026-10-28 13:49",
+ "duracion_s": 0.2
+}

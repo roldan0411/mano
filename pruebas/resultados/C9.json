@@ -1,0 +1,42 @@
+{
+ "id": "C9",
+ "nombre": "Convergencia de la competencia (PBT)",
+ "grupo": "C. Modelos de IA",
+ "objetivo": "Describir cómo aprende la población de 10 redes del motor y comparar la convergencia con 2 y con 10 electrodos.",
+ "requerimientos": [
+  "RF-07",
+  "RNF-09"
+ ],
+ "procedimiento": "Se leen de la base SQLite del motor las generaciones (mejor y promedio del puntaje en el examen) y las campeonas (generación y acierto), con 10 electrodos y con el archivo de 2 electrodos. Se mide en qué generación cada uno supera el 95 % y el 99 % de acierto.",
+ "criterio": "Informativa: documentar la convergencia; con 10 electrodos la campeona supera a la mejor de 2 electrodos.",
+ "resultado": {
+  "10 electrodos": {
+   "generaciones": 76,
+   "campeonas": 7,
+   "mejor_acierto": 0.9969,
+   "pseudo_r2": 0.9943,
+   "r2_pose": 0.9641,
+   "gen_95": 1,
+   "gen_99": 4
+  },
+  "2 electrodos": {
+   "generaciones": 810,
+   "campeonas": 14,
+   "mejor_acierto": 0.9759,
+   "pseudo_r2": 0.9617,
+   "r2_pose": 0.9198,
+   "gen_95": 4,
+   "gen_99": null
+  }
+ },
+ "figuras": [
+  {
+   "archivo": "figuras\\C9_convergencia.png",
+   "ancho_cm": 16
+  }
+ ],
+ "cumple": null,
+ "conclusion": "10 electrodos: 76 generaciones, mejor acierto 99.69 % (≥ 99 % desde la generación 4). 2 electrodos: 810 generaciones, mejor 97.59 %.",
+ "fecha": "2026-10-27 16:44",
+ "duracion_s": 0.4
+}

@@ -1,0 +1,61 @@
+{
+ "id": "C8",
+ "nombre": "Mano bebé: reproducibilidad del aprendizaje autónomo",
+ "grupo": "C. Modelos de IA",
+ "objetivo": "Verificar que la mano bebé aprenda sola, desde cero y sin metas predeterminadas, de forma reproducible.",
+ "requerimientos": [
+  "RF-09",
+  "RF-13"
+ ],
+ "procedimiento": "Se hace nacer la mano bebé 3 veces con semillas distintas y se la deja aprender 15.000 intentos. Se registran el número de habilidades descubiertas. la finura. la cobertura de lo que su cuerpo puede hacer y el R² del control (pose lograda frente a la propuesta. en 300 poses de examen) y de su modelo del cuerpo.",
+ "criterio": "R² del control ≥ 0,90 en todas las semillas, el repertorio crece en todas y el coeficiente de variación del número de habilidades es menor a 25 %.",
+ "resultado": {
+  "semillas": [
+   {
+    "semilla": 1,
+    "habilidades": 117,
+    "finura": 1,
+    "r2_control": 0.98998,
+    "r2_cuerpo": 0.998844,
+    "cobertura": 0.957478,
+    "parecidos_internet": 78,
+    "primera_habilidad": 372,
+    "segundos": 34.672091
+   },
+   {
+    "semilla": 2,
+    "habilidades": 105,
+    "finura": 1,
+    "r2_control": 0.991905,
+    "r2_cuerpo": 0.998788,
+    "cobertura": 0.956012,
+    "parecidos_internet": 71,
+    "primera_habilidad": 450,
+    "segundos": 40.408958
+   },
+   {
+    "semilla": 3,
+    "habilidades": 132,
+    "finura": 2,
+    "r2_control": 0.983105,
+    "r2_cuerpo": 0.998507,
+    "cobertura": 0.950147,
+    "parecidos_internet": 95,
+    "primera_habilidad": 318,
+    "segundos": 42.755982
+   }
+  ],
+  "cv_habilidades": 0.093605,
+  "intentos": 15000
+ },
+ "figuras": [
+  {
+   "archivo": "figuras\\C8_bebe.png",
+   "ancho_cm": 16
+  }
+ ],
+ "cumple": true,
+ "conclusion": "Habilidades descubiertas: 118 ± 11 (CV 9 %); primera habilidad en el intento 380 en promedio; R² del control 0.983–0.992; cobertura 95 %.",
+ "fecha": "2026-10-28 12:29",
+ "duracion_s": 118.4
+}

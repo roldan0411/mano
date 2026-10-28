@@ -1,0 +1,181 @@
+{
+ "id": "G4",
+ "nombre": "Pruebas automáticas (pytest)",
+ "grupo": "G. Software",
+ "objetivo": "Mantener una batería de pruebas que se corra con un solo comando antes de cada cambio.",
+ "requerimientos": [
+  "RNF-09"
+ ],
+ "procedimiento": "python -m pytest tests: procesamiento de la señal (características, contexto, calibración, acople, cadena de adquisición), NEAT (redes sin ciclos, innovaciones, cruce, exportación a C, especies), la pista (choques) y persistencia/operación (G1 y G3).",
+ "criterio": "Todas las pruebas pasan.",
+ "resultado": {
+  "total": 24,
+  "pasan": 24,
+  "por_archivo": {
+   "test_neat": {
+    "total": 7,
+    "pasan": 7
+   },
+   "test_persistencia": {
+    "total": 9,
+    "pasan": 9
+   },
+   "test_procesamiento": {
+    "total": 8,
+    "pasan": 8
+   }
+  },
+  "segundos": 9.342,
+  "casos": [
+   {
+    "archivo": "test_neat",
+    "prueba": "test_las_redes_crecen_sin_ciclos",
+    "segundos": 0.059,
+    "paso": true
+   },
+   {
+    "archivo": "test_neat",
+    "prueba": "test_misma_division_misma_neurona",
+    "segundos": 0.0,
+    "paso": true
+   },
+   {
+    "archivo": "test_neat",
+    "prueba": "test_el_hijo_hereda_la_estructura_del_mejor_padre",
+    "segundos": 0.006,
+    "paso": true
+   },
+   {
+    "archivo": "test_neat",
+    "prueba": "test_exportar_c_da_lo_mismo",
+    "segundos": 0.026,
+    "paso": true
+   },
+   {
+    "archivo": "test_neat",
+    "prueba": "test_poblacion_reproduce_y_especia",
+    "segundos": 0.009,
+    "paso": true
+   },
+   {
+    "archivo": "test_neat",
+    "prueba": "test_choca_con_medio_segundo_equivocado",
+    "segundos": 0.0,
+    "paso": true
+   },
+   {
+    "archivo": "test_neat",
+    "prueba": "test_las_transiciones_no_cuentan",
+    "segundos": 0.0,
+    "paso": true
+   },
+   {
+    "archivo": "test_persistencia",
+    "prueba": "test_g1_mano_de_la_competencia_se_guarda_y_carga_igual",
+    "segundos": 5.086,
+    "paso": true
+   },
+   {
+    "archivo": "test_persistencia",
+    "prueba": "test_g1_almacen_no_borra_la_carpeta_al_pasar_el_limite",
+    "segundos": 0.052,
+    "paso": true
+   },
+   {
+    "archivo": "test_persistencia",
+    "prueba": "test_g1_mano_bebe_retoma_y_aparta_versiones_viejas",
+    "segundos": 0.913,
+    "paso": true
+   },
+   {
+    "archivo": "test_persistencia",
+    "prueba": "test_g1_neuroevolucion_se_guarda_y_sigue_igual",
+    "segundos": 0.02,
+    "paso": true
+   },
+   {
+    "archivo": "test_persistencia",
+    "prueba": "test_g3_motor_se_adapta_a_bateria_y_ram[salud0-cuda-False]",
+    "segundos": 0.364,
+    "paso": true
+   },
+   {
+    "archivo": "test_persistencia",
+    "prueba": "test_g3_motor_se_adapta_a_bateria_y_ram[salud1-cuda-True]",
+    "segundos": 0.001,
+    "paso": true
+   },
+   {
+    "archivo": "test_persistencia",
+    "prueba": "test_g3_motor_se_adapta_a_bateria_y_ram[salud2-cpu-False]",
+    "segundos": 0.001,
+    "paso": true
+   },
+   {
+    "archivo": "test_persistencia",
+    "prueba": "test_g3_motor_se_adapta_a_bateria_y_ram[salud3-cuda-True]",
+    "segundos": 0.001,
+    "paso": true
+   },
+   {
+    "archivo": "test_persistencia",
+    "prueba": "test_g2_sin_procesos_huerfanos",
+    "segundos": 2.758,
+    "paso": true
+   },
+   {
+    "archivo": "test_procesamiento",
+    "prueba": "test_diez_electrodos_y_cuarenta_caracteristicas",
+    "segundos": 0.001,
+    "paso": true
+   },
+   {
+    "archivo": "test_procesamiento",
+    "prueba": "test_caracteristicas_senoidal",
+    "segundos": 0.001,
+    "paso": true
+   },
+   {
+    "archivo": "test_procesamiento",
+    "prueba": "test_vectorizada_igual_a_referencia",
+    "segundos": 0.017,
+    "paso": true
+   },
+   {
+    "archivo": "test_procesamiento",
+    "prueba": "test_continua_no_cambia_nada",
+    "segundos": 0.003,
+    "paso": true
+   },
+   {
+    "archivo": "test_procesamiento",
+    "prueba": "test_contexto_repite_al_empezar_y_ordena_del_mas_viejo",
+    "segundos": 0.001,
+    "paso": true
+   },
+   {
+    "archivo": "test_procesamiento",
+    "prueba": "test_calibracion_relativa",
+    "segundos": 0.001,
+    "paso": true
+   },
+   {
+    "archivo": "test_procesamiento",
+    "prueba": "test_acople_normalizado_y_selectivo",
+    "segundos": 0.001,
+    "paso": true
+   },
+   {
+    "archivo": "test_procesamiento",
+    "prueba": "test_cadena_de_adquisicion_da_cuentas_de_12_bits",
+    "segundos": 0.021,
+    "paso": true
+   }
+  ]
+ },
+ "figuras": [],
+ "cumple": true,
+ "conclusion": "24 de 24 pruebas pasan en 9 s.",
+ "fecha": "2026-10-28 13:52",
+ "duracion_s": 0.0
+}

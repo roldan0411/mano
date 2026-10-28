@@ -1,0 +1,44 @@
+{
+ "id": "D3",
+ "nombre": "Presupuesto de muestreo de los 10 electrodos",
+ "grupo": "D. Embebido (ESP32)",
+ "objetivo": "Verificar que el ESP32 alcance a leer los 10 electrodos a 1 kHz por el multiplexor y a procesar cada ventana a tiempo.",
+ "requerimientos": [
+  "RF-12",
+  "RNF-06"
+ ],
+ "procedimiento": "Cálculo del tiempo de cada milisegundo: 10 lecturas, cada una con 4 escrituras digitales para elegir el canal del CD74HC4067, 3 µs de asentamiento y la conversión del ADC. Como el tiempo de analogRead depende de la versión del núcleo de Arduino, se toma un rango de 10 a 40 µs. Cada 100 ms se suma el procesamiento estimado en D2.",
+ "criterio": "Ocupación de la CPU menor a 50 % en el peor caso.",
+ "resultado": {
+  "tabla": [
+   {
+    "analogread_us": 10,
+    "lectura_us_por_ms": 138.0,
+    "procesamiento_us_por_ms": 25.98333,
+    "ocupacion_pct": 16.398333
+   },
+   {
+    "analogread_us": 20,
+    "lectura_us_por_ms": 238.0,
+    "procesamiento_us_por_ms": 25.98333,
+    "ocupacion_pct": 26.398333
+   },
+   {
+    "analogread_us": 40,
+    "lectura_us_por_ms": 438.0,
+    "procesamiento_us_por_ms": 25.98333,
+    "ocupacion_pct": 46.398333
+   }
+  ]
+ },
+ "figuras": [
+  {
+   "archivo": "figuras\\D3_muestreo.png",
+   "ancho_cm": 10
+  }
+ ],
+ "cumple": true,
+ "conclusion": "Ocupación de la CPU: 16 % con analogRead de 10 µs; 26 % con analogRead de 20 µs; 46 % con analogRead de 40 µs. Si la medición en la placa da más, conviene el modo continuo del ADC (DMA) o un ADC externo.",
+ "fecha": "2026-10-28 13:49",
+ "duracion_s": 0.3
+}

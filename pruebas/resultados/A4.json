@@ -1,0 +1,29 @@
+{
+ "id": "A4",
+ "nombre": "Espectro de la señal simulada",
+ "grupo": "A. Gemelo digital",
+ "objetivo": "Verificar que el contenido en frecuencia del EMG simulado esté en el rango fisiológico del EMG de superficie.",
+ "requerimientos": [
+  "RF-01"
+ ],
+ "procedimiento": "Con 12 personas y 6 gestos se toma la señal de cada electrodo en contracción sostenida (desde 300 ms después del inicio), se estima la densidad espectral (Welch, 256 ms) y se calculan la frecuencia mediana (MDF) y la media (MNF) del electrodo más activo de cada gesto.",
+ "criterio": "Frecuencia mediana entre 50 y 150 Hz (rango reportado para EMG de superficie del antebrazo).",
+ "resultado": {
+  "mdf_mediana_hz": 113.28125,
+  "mdf_p10": 101.5625,
+  "mdf_p90": 179.296875,
+  "mnf_mediana_hz": 129.305311,
+  "fraccion_en_rango": 0.666667,
+  "n": 72
+ },
+ "figuras": [
+  {
+   "archivo": "figuras\\A4_espectro.png",
+   "ancho_cm": 16
+  }
+ ],
+ "cumple": false,
+ "conclusion": "Frecuencia mediana 113 Hz (p10–p90: 102–179 Hz); 67 % de las señales dentro de 50–150 Hz.",
+ "fecha": "2026-10-27 15:03",
+ "duracion_s": 0.2
+}

@@ -7,33 +7,42 @@
  * ============================================================
  *
  *  Qué hace:
- *    1. Muestrea los dos canales EMG a 1 kHz.
- *    2. Cada 100 ms toma los últimos 200 ms de señal y calcula
- *       MAV, RMS, ZC y WL de cada canal (8 características).
- *    3. La red neuronal (modelo_red.h) predice el gesto y su
- *       confianza. Si la confianza es baja, no cambia de gesto.
- *    4. Un filtro de mayoría (3 predicciones) evita temblores.
- *    5. Los 5 servos de los dedos van a la pose del gesto y el
- *       servo de la muñeca (MG996R) se mueve suavemente hacia su
- *       ángulo, para no pedir picos grandes de corriente.
+ *    1. Muestrea los 10 electrodos a 1 kHz: F1-F5 sobre los flexores
+ *       y E1-E5 sobre los extensores, cada uno contra un electrodo de
+ *       referencia común (en el codo).
+ *    2. Al encender, CALIBRA (~28 s): la mano muestra cada gesto y la
+ *       persona lo hace una vez. Así las características quedan
+ *       relativas a la persona y a dónde quedaron hoy los electrodos.
+ *       Mandando "c" por el Monitor Serie se vuelve a calibrar.
+ *    3. Cada 100 ms toma los últimos 200 ms de cada electrodo y calcula
+ *       MAV, RMS, ZC y WL (40 características), las calibra y junta las
+ *       3 últimas ventanas: 120 entradas (procesamiento_emg.h, la misma
+ *       cuenta que el gemelo digital en Python).
+ *    4. La red predice el gesto y su confianza. Si la confianza es baja,
+ *       no cambia de gesto; un filtro de mayoría (3 predicciones) evita
+ *       temblores.
+ *    5. Los 5 servos de los dedos van a la pose del gesto y el servo de
+ *       la muñeca (MG996R) se mueve suavemente hacia su ángulo.
  *
- *  Gestos: reposo, abierta, puno, pinza, senalar (dedos) y
- *          flexion, extension (muñeca).
- *
- *  Antes de subirlo:
- *    - Copia modelo_red.h y modelo_rf.h (los genera
- *      entrenar_modelo.py) en esta misma carpeta.
- *    - Opcional: copia poses_aprendidas.h (la genera el gemelo
- *      digital con aprendizaje por refuerzo). Si está, se usan
- *      esos comandos de servo en vez de la tabla de abajo.
- *    - Instala la librería "ESP32Servo" (Gestor de librerías).
+ *  Lectura de los 10 electrodos: el ADC1 del ESP32 no tiene 10 entradas
+ *  libres, así que cada electrodo (ya amplificado y filtrado) entra a un
+ *  multiplexor analógico CD74HC4067 y el ESP32 lee la salida del
+ *  multiplexor en un solo pin, canal por canal, en cada milisegundo. Si
+ *  se usa otro conversor (por ejemplo un ADS1299), solo cambia
+ *  leerElectrodos().
  *
  *  MODELO:
- *    2 = red neuronal (principal)
- *    1 = Random Forest (respaldo)
- *    0 = PLAN B por umbral, no necesita ningún modelo. La mano se
- *        cierra cuando el canal 1 supera UMBRAL_PUNO. Mira los
- *        valores de MAV en el Monitor Serie para calibrarlo.
+ *    2 = red de la competencia del gemelo (modelo_red_calibrado.h, de la
+ *        carpeta de la campeona)                                  [principal]
+ *    3 = red evolucionada por neuroevolución (red_neat.h, de la carpeta
+ *        del campeón NEAT)
+ *    1 = Random Forest entrenado con datos reales sin calibrar (modelo_rf.h,
+ *        lo genera entrenar_modelo.py)
+ *    0 = PLAN B por umbral, sin modelo: la mano se cierra cuando los
+ *        flexores (F3) superan UMBRAL_PUNO. Mira los MAV en el Monitor Serie.
+ *
+ *  Antes de subirlo: copia el .h del modelo elegido junto a este archivo
+ *  (y procesamiento_emg.h) e instala la librería "ESP32Servo".
  */
 
 #define MODELO 2
@@ -43,14 +52,20 @@
 #include <string.h>
 
 #if MODELO == 2
-  #include "modelo_red.h"
+  #include "modelo_red_calibrado.h"
 #elif MODELO == 1
   #include "modelo_rf.h"
-#else
-  #define VENTANA 200
-  #define PASO 100
-  #define UMBRAL_ZC 20
-  #define NUM_CARACTERISTICAS 8
+#endif
+#include "procesamiento_emg.h"
+#if MODELO == 3
+  #include "red_neat.h"
+#endif
+#if MODELO == 0 || MODELO == 3
+  #define NUM_CLASES 7
+  static const char* const NOMBRES_GESTOS[NUM_CLASES] = {
+    "reposo", "abierta", "puno", "pinza", "senalar", "flexion", "extension"};
+#endif
+#if MODELO == 0
   const float UMBRAL_PUNO = 60.0;   // ajústalo con tu propia señal
 #endif
 
@@ -58,8 +73,10 @@
 const float UMBRAL_CONFIANZA = 0.60;
 
 // ---------------- Pines ----------------
-const int PIN_CANAL_1 = 34;    // flexores (antebrazo interno)
-const int PIN_CANAL_2 = 35;    // extensores (antebrazo externo)
+const int PIN_MUX_SALIDA = 34;                 // salida del CD74HC4067 -> ADC1
+const int PIN_MUX_SEL[4] = {18, 19, 21, 22};   // S0..S3 del multiplexor
+// canal del multiplexor de cada electrodo:  F1 F2 F3 F4 F5 E1 E2 E3 E4 E5
+const int CANAL_MUX[NUM_CANALES] =         {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 //                      pulgar indice medio anular menique
 const int PIN_SERVO[5] = {13,   14,    25,   26,    27};
 const int PIN_MUNECA = 33;     // servo MG996R de la muñeca
@@ -76,11 +93,14 @@ const int MUNECA_RANGO = 40;          // grados hacia cada lado
 const int MUNECA_PASO = 2;            // grados por paso (suavizado)
 const int MUNECA_CADA_MS = 20;        // un paso cada 20 ms = 100 °/s
 
+// Calibración de la sesión: cada gesto, 1,5 s para prepararse y 2,5 s haciéndolo
+const unsigned long CAL_PREPARAR_MS = 1500, CAL_GESTO_MS = 2500;
+
 // Poses: dedos 0.0 = estirado, 1.0 = cerrado
 //        muñeca -1 = flexión (hacia la palma), 0 = recta, +1 = extensión
 struct Pose { const char* gesto; float dedos[5]; float muneca; };
 #if __has_include("poses_aprendidas.h")
-  // Comandos aprendidos por refuerzo en el gemelo digital (gemelo_digital.py)
+  // Comandos aprendidos por refuerzo en el gemelo digital
   #include "poses_aprendidas.h"
 #else
 const Pose POSES[] = {
@@ -96,43 +116,30 @@ const Pose POSES[] = {
 const int NUM_POSES = sizeof(POSES) / sizeof(POSES[0]);
 
 // ---------------- Variables ----------------
-const unsigned long PERIODO_US = 1000;   // 1 kHz
+const unsigned long PERIODO_US = 1000;   // 1 kHz por electrodo
 Servo servos[5];
 Servo servoMuneca;
 int munecaActual = MUNECA_NEUTRO, munecaObjetivo = MUNECA_NEUTRO;
 int contadorMuneca = 0;
-int16_t buf1[VENTANA], buf2[VENTANA];    // buffers circulares
+uint16_t buf[NUM_CANALES][VENTANA];      // buffers circulares, uno por electrodo
 int idx = 0, muestrasNuevas = 0, muestrasTotales = 0;
 unsigned long proximaMuestra;
 int historial[3] = {-1, -1, -1};
 int poseActual = -1;
 int ultimaClase = 0;
+EstadoEMG emg;
+bool calibrando = false;
+int calGesto = 0;
+unsigned long calInicio = 0;
 
-// ---------------- Características (igual que en Python) ----------------
-void caracteristicasCanal(const int16_t* b, int inicio, float* salida) {
-  float x[VENTANA];
-  float media = 0;
-  for (int i = 0; i < VENTANA; i++) {
-    x[i] = b[(inicio + i) % VENTANA];
-    media += x[i];
+// ---------------- Lectura de los 10 electrodos ----------------
+void leerElectrodos(uint16_t* v) {
+  for (int c = 0; c < NUM_CANALES; c++) {
+    int m = CANAL_MUX[c];
+    for (int b = 0; b < 4; b++) digitalWrite(PIN_MUX_SEL[b], (m >> b) & 1);
+    delayMicroseconds(3);                 // asentamiento del multiplexor
+    v[c] = analogRead(PIN_MUX_SALIDA);
   }
-  media /= VENTANA;
-
-  float mav = 0, rms = 0, zc = 0, wl = 0;
-  for (int i = 0; i < VENTANA; i++) {
-    x[i] -= media;
-    mav += fabsf(x[i]);
-    rms += x[i] * x[i];
-  }
-  for (int i = 0; i < VENTANA - 1; i++) {
-    float d = x[i + 1] - x[i];
-    if (x[i] * x[i + 1] < 0 && fabsf(d) >= UMBRAL_ZC) zc += 1;
-    wl += fabsf(d);
-  }
-  salida[0] = mav / VENTANA;
-  salida[1] = sqrtf(rms / VENTANA);
-  salida[2] = zc;
-  salida[3] = wl;
 }
 
 int buscarPose(const char* nombre) {
@@ -174,11 +181,40 @@ int mayoria(int nueva) {
   return nueva;
 }
 
+// ---------------- Calibración de la sesión ----------------
+void empezarCalibracion() {
+  emg_cal_empezar(&emg);
+  calibrando = true;
+  calGesto = 0;
+  calInicio = millis();
+  moverMano(buscarPose(NOMBRES_GESTOS[0]));
+  Serial.printf("Calibración: prepárate para hacer «%s»\n", NOMBRES_GESTOS[0]);
+}
+
+// true mientras la persona está haciendo el gesto (ahí se toman las ventanas)
+bool avanzarCalibracion() {
+  unsigned long t = millis() - calInicio;
+  if (t < CAL_PREPARAR_MS) return false;
+  if (t < CAL_PREPARAR_MS + CAL_GESTO_MS) return true;
+  calGesto++;
+  if (calGesto >= NUM_CLASES) {
+    calibrando = false;
+    emg_cal_terminar(&emg);
+    Serial.printf("Calibración lista (%d ventanas). Ya puedes usar la mano.\n", emg.n_cal);
+    return false;
+  }
+  calInicio = millis();
+  moverMano(buscarPose(NOMBRES_GESTOS[calGesto]));
+  Serial.printf("Calibración: prepárate para hacer «%s»\n", NOMBRES_GESTOS[calGesto]);
+  return false;
+}
+
 // ---------------- Programa principal ----------------
 void setup() {
   Serial.begin(115200);
   analogReadResolution(12);
   analogSetAttenuation(ADC_11db);
+  for (int b = 0; b < 4; b++) pinMode(PIN_MUX_SEL[b], OUTPUT);
 
   for (int d = 0; d < 5; d++) {
     servos[d].setPeriodHertz(50);
@@ -190,19 +226,25 @@ void setup() {
   moverMano(buscarPose("abierta"));
   delay(800);
 
-  Serial.println(MODELO == 2 ? "Modelo: red neuronal"
-               : MODELO == 1 ? "Modelo: Random Forest"
+  Serial.println(MODELO == 2 ? "Modelo: red de la competencia del gemelo (120 entradas)"
+               : MODELO == 3 ? "Modelo: red evolucionada (NEAT, 120 entradas)"
+               : MODELO == 1 ? "Modelo: Random Forest (datos reales)"
                : "Modelo: umbral (plan B)");
+#if MODELO >= 2
+  empezarCalibracion();
+#endif
   proximaMuestra = micros();
 }
 
 void loop() {
+  if (Serial.available() && Serial.read() == 'c') empezarCalibracion();
   if ((long)(micros() - proximaMuestra) < 0) return;
   proximaMuestra += PERIODO_US;
   actualizarMuneca();
 
-  buf1[idx] = analogRead(PIN_CANAL_1);
-  buf2[idx] = analogRead(PIN_CANAL_2);
+  uint16_t v[NUM_CANALES];
+  leerElectrodos(v);
+  for (int c = 0; c < NUM_CANALES; c++) buf[c][idx] = v[c];
   idx = (idx + 1) % VENTANA;
   if (muestrasTotales < VENTANA) muestrasTotales++;
   muestrasNuevas++;
@@ -211,23 +253,43 @@ void loop() {
   muestrasNuevas = 0;
 
   // idx apunta a la muestra más antigua de la ventana
-  float carac[NUM_CARACTERISTICAS];
-  caracteristicasCanal(buf1, idx, &carac[0]);
-  caracteristicasCanal(buf2, idx, &carac[4]);
+  float F[NUM_CARAC];
+  emg_caracteristicas(buf, idx, F);
+
+  if (calibrando) {
+    if (avanzarCalibracion()) emg_cal_agregar(&emg, F);
+    return;
+  }
 
 #if MODELO == 0
-  const char* nombre = (carac[0] > UMBRAL_PUNO) ? "puno" : "abierta";
+  const char* nombre = (F[2 * CARAC_POR_CANAL] > UMBRAL_PUNO) ? "puno" : "abierta";   // MAV de F3
   int pose = buscarPose(nombre);
-  Serial.printf("MAV c1=%.1f  c2=%.1f  -> %s\n", carac[0], carac[4], nombre);
+  Serial.printf("MAV F3=%.1f  E3=%.1f  -> %s\n", F[2 * CARAC_POR_CANAL], F[7 * CARAC_POR_CANAL], nombre);
 #else
   float confianza = 0;
-  int prediccion = predecir_gesto(carac, &confianza);
+  #if MODELO == 1
+    int prediccion = predecir_gesto(F, &confianza);           // sin calibrar, como se entrenó
+  #else
+    float x[NUM_ENTRADAS];
+    emg_entrada(&emg, F, x);                                   // calibradas + 3 ventanas
+    #if MODELO == 2
+      int prediccion = predecir_gesto(x, &confianza);
+    #else
+      float z[NUM_CLASES];
+      neat_predecir(x, z);
+      int prediccion = 0;
+      for (int k = 1; k < NUM_CLASES; k++) if (z[k] > z[prediccion]) prediccion = k;
+      float suma = 0;
+      for (int k = 0; k < NUM_CLASES; k++) suma += expf(z[k] - z[prediccion]);
+      confianza = 1.0f / suma;
+    #endif
+  #endif
   if (confianza >= UMBRAL_CONFIANZA) ultimaClase = prediccion;  // si duda, no cambia
   int clase = mayoria(ultimaClase);
   const char* nombre = NOMBRES_GESTOS[clase];
   int pose = buscarPose(nombre);
-  Serial.printf("Gesto: %-9s | confianza %3.0f %% | MAV c1=%.1f c2=%.1f\n",
-                nombre, confianza * 100, carac[0], carac[4]);
+  Serial.printf("Gesto: %-9s | confianza %3.0f %% | MAV F3=%.1f E3=%.1f\n",
+                nombre, confianza * 100, F[2 * CARAC_POR_CANAL], F[7 * CARAC_POR_CANAL]);
 #endif
 
   moverMano(pose);

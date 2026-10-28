@@ -24,7 +24,6 @@ import pickle
 import queue
 import time
 import traceback
-from concurrent.futures import ProcessPoolExecutor
 
 import numpy as np
 
@@ -60,7 +59,7 @@ class Neuro:
         self.salida, self.entrada = salida, entrada
         RAIZ.mkdir(parents=True, exist_ok=True)
         (RAIZ / "campeones").mkdir(exist_ok=True)
-        self.pool = ProcessPoolExecutor(max_workers=3)
+        self.pool = config.pool_vigilado(3)
         self.modo, self.pausa, self.detener, self.pide_siguiente, self.recalcular = "ver", False, False, True, False
         self.pob = self._cargar()
 

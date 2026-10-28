@@ -1,0 +1,30 @@
+{
+ "id": "D4",
+ "nombre": "Latencia de reconocimiento",
+ "grupo": "D. Embebido (ESP32)",
+ "objetivo": "Medir cuánto tarda la mano en mostrar el gesto desde que la persona empieza a hacerlo.",
+ "requerimientos": [
+  "RNF-04"
+ ],
+ "procedimiento": "Con 12 personas simuladas (21 gestos cada una) se pasa la campeona por el mismo filtro del firmware (umbral de confianza 0,60 y mayoría de 3) y, para cada gesto, se mide desde el inicio de la contracción hasta la primera ventana en que la salida filtrada es el gesto correcto. Cada ventana de 200 ms se decide al terminar, cada 100 ms. No incluye el movimiento de los servos.",
+ "criterio": "Mediana menor a 300 ms (RNF-04).",
+ "resultado": {
+  "mediana_ms": 300.0,
+  "p90_ms": 300.0,
+  "nunca_pct": 0.793651,
+  "sin_filtro_mediana_ms": 200.0,
+  "sin_filtro_p90_ms": 200.0,
+  "n_gestos": 252,
+  "campeona": 7
+ },
+ "figuras": [
+  {
+   "archivo": "figuras\\D4_latencia.png",
+   "ancho_cm": 11
+  }
+ ],
+ "cumple": false,
+ "conclusion": "Con el filtro del firmware: mediana 300 ms, p90 300 ms; sin el filtro de mayoría: mediana 200 ms. La ventana de 200 ms pone el piso: la primera decisión posible llega a los 200 ms y el filtro de mayoría agrega 100 ms.",
+ "fecha": "2026-10-28 13:47",
+ "duracion_s": 12.6
+}

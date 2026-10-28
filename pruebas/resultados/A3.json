@@ -1,0 +1,37 @@
+{
+ "id": "A3",
+ "nombre": "Respuesta en frecuencia del filtro",
+ "grupo": "A. Gemelo digital",
+ "objetivo": "Verificar que el pasa-banda de la segunda etapa (R1 = 10 kΩ, C1 = 1 µF, Rf = 100 kΩ, Cf = 3,3 nF) tenga los cortes de diseño.",
+ "requerimientos": [
+  "RF-03"
+ ],
+ "procedimiento": "Se obtiene la respuesta en frecuencia del filtro analógico (función de transferencia) y la del filtro discretizado a 4 kHz (transformación bilineal) que usa el gemelo. Se buscan los puntos de −3 dB respecto de la ganancia máxima.",
+ "criterio": "Cortes a 16 y 482 Hz con ±5 %; ganancia en la banda de 20 dB (×10).",
+ "resultado": {
+  "analogico": {
+   "ganancia_db": 19.712542,
+   "f_baja": 15.588259,
+   "f_alta": 511.803244
+  },
+  "digital": {
+   "ganancia_db": 19.712542,
+   "f_baja": 15.588259,
+   "f_alta": 486.514399
+  },
+  "f_baja_diseno": 15.915494,
+  "f_alta_diseno": 482.287706,
+  "error_baja_pct": 2.056083,
+  "error_alta_pct": 0.876384
+ },
+ "figuras": [
+  {
+   "archivo": "figuras\\A3_bode.png",
+   "ancho_cm": 14
+  }
+ ],
+ "cumple": true,
+ "conclusion": "Cortes del filtro del gemelo: 15.6 Hz y 487 Hz (diseño 15.9 y 482 Hz; errores 2.1 % y 0.9 %), ganancia 19.7 dB.",
+ "fecha": "2026-10-27 15:02",
+ "duracion_s": 0.2
+}

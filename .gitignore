@@ -19,3 +19,8 @@ Inmoov-hand-i2.zip
 # Tablero en vivo: se regenera en cada ejecución (plotly.min.js, intentos, figuras)
 reportes/vivo/
 reportes/tablero.html
+
+# pruebas: binarios compilados y datos temporales
+pruebas/resultados/compilacion/
+tests/_padre_que_muere.py
+__pycache__/

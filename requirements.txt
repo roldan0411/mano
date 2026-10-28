@@ -23,3 +23,9 @@ pyqtgraph==0.14.0
 PySide6==6.12.0
 trimesh==5.1.1
 fast-simplification==0.2.0
+
+# pruebas y documentación
+pytest
+ziglang
+python-docx
+latex2mathml

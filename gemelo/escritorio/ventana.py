@@ -448,8 +448,8 @@ class BrazoWidget(QtWidgets.QWidget):
         p.drawEllipse(QtCore.QPointF(cx + R * 0.2, cy - R * 0.02), R * 0.11, R * 0.09)
         p.setPen(QtGui.QColor(C["muted"]))
         p.setFont(QtGui.QFont("Segoe UI", 9))
-        p.drawText(QtCore.QRectF(cx - R * 0.3, cy - 8, R * 0.24, 16), Qt.AlignCenter, "radio")
-        p.drawText(QtCore.QRectF(cx + R * 0.1, cy - 10, R * 0.22, 16), Qt.AlignCenter, "cúbito")
+        p.drawText(QtCore.QRectF(cx - R * 0.3, cy - 8, R * 0.24, 16), Qt.AlignCenter, "cúbito")
+        p.drawText(QtCore.QRectF(cx + R * 0.1, cy - 10, R * 0.22, 16), Qt.AlignCenter, "radio")
         p.drawText(QtCore.QRectF(4, cy - R, 120, 16), Qt.AlignLeft, "↑ lado del dorso")
         p.drawText(QtCore.QRectF(4, cy + R - 14, 120, 16), Qt.AlignLeft, "↓ lado de la palma")
         colores = COLORES_CANAL

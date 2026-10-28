@@ -1,0 +1,94 @@
+{
+ "id": "C1",
+ "nombre": "2 electrodos frente a 10",
+ "grupo": "C. Modelos de IA",
+ "objetivo": "Cuantificar cuánto mejora el reconocimiento al pasar de 2 electrodos (uno sobre flexores y otro sobre extensores, como el diseño inicial) a 10.",
+ "requerimientos": [
+  "RF-02",
+  "RF-06",
+  "RF-13",
+  "RNF-01"
+ ],
+ "procedimiento": "Los 2 electrodos del diseño inicial estaban a 270° y 90°: son F3 y E3 del anillo actual, así que la configuración de 2 se obtiene con las mismas personas usando solo sus características. Se entrena el mismo MLP (gesto + pose) con 2 y con 10 electrodos en 5 particiones por persona (80 % entrenamiento, 20 % prueba) y se compara con la prueba t pareada.",
+ "criterio": "Con 10 electrodos el acierto, el pseudo-R² y el R² de la pose son mayores en las 5 particiones (p < 0,05).",
+ "resultado": {
+  "particiones": [
+   {
+    "particion": 0,
+    "acierto_2": 0.948242,
+    "pseudo_r2_2": 0.932188,
+    "r2_pose_2": 0.862355,
+    "acierto_10": 0.980073,
+    "pseudo_r2_10": 0.966315,
+    "r2_pose_10": 0.918131
+   },
+   {
+    "particion": 1,
+    "acierto_2": 0.951242,
+    "pseudo_r2_2": 0.931973,
+    "r2_pose_2": 0.842691,
+    "acierto_10": 0.984166,
+    "pseudo_r2_10": 0.972767,
+    "r2_pose_10": 0.92291
+   },
+   {
+    "particion": 2,
+    "acierto_2": 0.950684,
+    "pseudo_r2_2": 0.931046,
+    "r2_pose_2": 0.856176,
+    "acierto_10": 0.983445,
+    "pseudo_r2_10": 0.970047,
+    "r2_pose_10": 0.925791
+   },
+   {
+    "particion": 3,
+    "acierto_2": 0.95545,
+    "pseudo_r2_2": 0.939233,
+    "r2_pose_2": 0.870219,
+    "acierto_10": 0.981631,
+    "pseudo_r2_10": 0.970797,
+    "r2_pose_10": 0.919984
+   },
+   {
+    "particion": 4,
+    "acierto_2": 0.953823,
+    "pseudo_r2_2": 0.939102,
+    "r2_pose_2": 0.869994,
+    "acierto_10": 0.984119,
+    "pseudo_r2_10": 0.973288,
+    "r2_pose_10": 0.936956
+   }
+  ],
+  "acierto": {
+   "2": 0.951888,
+   "2_sd": 0.002514,
+   "10": 0.982687,
+   "10_sd": 0.001597,
+   "p": 1.6e-05
+  },
+  "pseudo_r2": {
+   "2": 0.934708,
+   "2_sd": 0.003661,
+   "10": 0.970643,
+   "10_sd": 0.002475,
+   "p": 3e-05
+  },
+  "r2_pose": {
+   "2": 0.860287,
+   "2_sd": 0.010234,
+   "10": 0.924754,
+   "10_sd": 0.006633,
+   "p": 0.000272
+  }
+ },
+ "figuras": [
+  {
+   "archivo": "figuras\\C1_2_vs_10.png",
+   "ancho_cm": 16
+  }
+ ],
+ "cumple": true,
+ "conclusion": "Acierto 95.2 % → 98.3 %; pseudo-R² 0.935 → 0.971; R² pose 0.860 → 0.925 (p = 1.6e-05).",
+ "fecha": "2026-10-27 16:45",
+ "duracion_s": 20.1
+}

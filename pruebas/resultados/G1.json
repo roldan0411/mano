@@ -1,0 +1,44 @@
+{
+ "id": "G1",
+ "nombre": "Persistencia: cerrar y reabrir",
+ "grupo": "G. Software",
+ "objetivo": "Verificar que todo lo aprendido se guarde y se recupere igual al reabrir (la falla de «todo en cero» del 26 de octubre).",
+ "requerimientos": [
+  "RF-11"
+ ],
+ "procedimiento": "Pruebas automáticas que guardan y vuelven a cargar: una red de la competencia (mismas predicciones, métricas y pasos), la mano bebé (mismos intentos y habilidades; una versión vieja se aparta como respaldo y nace de cero), la población NEAT (mismas salidas) y el límite de disco del almacén (regresión del error que borraba la carpeta de lotes y tumbaba el motor). Además, en la aplicación se verificó a mano que el motor retoma la generación donde iba.",
+ "criterio": "Todas las pruebas pasan.",
+ "resultado": {
+  "casos": [
+   {
+    "archivo": "test_persistencia",
+    "prueba": "test_g1_mano_de_la_competencia_se_guarda_y_carga_igual",
+    "segundos": 5.086,
+    "paso": true
+   },
+   {
+    "archivo": "test_persistencia",
+    "prueba": "test_g1_almacen_no_borra_la_carpeta_al_pasar_el_limite",
+    "segundos": 0.052,
+    "paso": true
+   },
+   {
+    "archivo": "test_persistencia",
+    "prueba": "test_g1_mano_bebe_retoma_y_aparta_versiones_viejas",
+    "segundos": 0.913,
+    "paso": true
+   },
+   {
+    "archivo": "test_persistencia",
+    "prueba": "test_g1_neuroevolucion_se_guarda_y_sigue_igual",
+    "segundos": 0.02,
+    "paso": true
+   }
+  ]
+ },
+ "figuras": [],
+ "cumple": true,
+ "conclusion": "4 de 4 pruebas de persistencia pasan.",
+ "fecha": "2026-10-28 13:52",
+ "duracion_s": 0.0
+}

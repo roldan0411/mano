@@ -1,0 +1,54 @@
+{
+ "id": "A6",
+ "nombre": "Señal simulada frente a EMG real",
+ "grupo": "A. Gemelo digital",
+ "objetivo": "Comparar estadísticas de forma de la señal del gemelo con EMG real del dataset UCI «EMG data for gestures» (36 personas, pulsera Myo de 8 canales, CC BY 4.0).",
+ "requerimientos": [
+  "RF-01"
+ ],
+ "procedimiento": "La Myo muestrea a ~200 Hz, así que el gemelo se filtra (pasa-bajos 90 Hz) y se lleva a 200 Hz antes de comparar. En contracción se calculan, por ventana de 200 ms del canal más activo: el cociente RMS/MAV (forma de la distribución de amplitud; 1,25 para una gaussiana), la curtosis y la frecuencia mediana en la banda de análisis 20–90 Hz (la misma para las dos señales: el EMG real viene sin pasa-altos y con artefactos de movimiento).",
+ "criterio": "Diferencia de medianas menor a 10 % en RMS/MAV y a 25 % en la frecuencia mediana (en la banda común).",
+ "resultado": {
+  "rms_mav": {
+   "sim_mediana": 1.236122,
+   "sim_p25": 1.203716,
+   "sim_p75": 1.271612,
+   "real_mediana": 1.233635,
+   "real_p25": 1.170552,
+   "real_p75": 1.290852,
+   "dif_pct": 0.201619,
+   "ks": 0.200655
+  },
+  "curtosis": {
+   "sim_mediana": -0.350843,
+   "sim_p25": -0.664256,
+   "sim_p75": 0.03095,
+   "real_mediana": -0.51348,
+   "real_p25": -0.976631,
+   "real_p75": 0.112223,
+   "dif_pct": 31.673432,
+   "ks": 0.221096
+  },
+  "mdf": {
+   "sim_mediana": 54.6875,
+   "sim_p25": 51.5625,
+   "sim_p75": 59.375,
+   "real_mediana": 35.9375,
+   "real_p25": 34.375,
+   "real_p75": 37.5,
+   "dif_pct": 52.173913,
+   "ks": 0.986111
+  },
+  "fs_real_hz": 1000.0
+ },
+ "figuras": [
+  {
+   "archivo": "figuras\\A6_real.png",
+   "ancho_cm": 16
+  }
+ ],
+ "cumple": false,
+ "conclusion": "RMS/MAV: gemelo 1.236 vs real 1.234 (0.2 %); frecuencia mediana en 20–90 Hz: 55 vs 36 Hz (52 %); curtosis -0.35 vs -0.51.",
+ "fecha": "2026-10-27 15:03",
+ "duracion_s": 1.5
+}

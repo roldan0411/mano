@@ -1,0 +1,105 @@
+{
+ "id": "C7",
+ "nombre": "Aprendizaje contrastivo con pocas etiquetas",
+ "grupo": "C. Modelos de IA",
+ "objetivo": "Verificar que el codificador contrastivo (SimCLR, sin etiquetas) aprenda una representación de la señal cruda de los 10 electrodos que sirva cuando hay pocas etiquetas.",
+ "requerimientos": [
+  "RF-06"
+ ],
+ "procedimiento": "Se simulan 70 personas con dos vistas físicas de cada ventana (el mismo músculo medido con los electrodos recolocados). El codificador 1D-CNN se entrena 6 épocas con la pérdida NT-Xent sin usar ninguna etiqueta. Después se entrena una regresión logística con el 1 %, 5 %, 10 % y 100 % de las etiquetas de las personas de entrenamiento, sobre (a) el embedding contrastivo y (b) las 40 características clásicas, y se evalúa en personas nuevas (3 repeticiones).",
+ "criterio": "Con 1 % de etiquetas, el embedding contrastivo iguala o supera a las características clásicas.",
+ "resultado": {
+  "tabla": [
+   {
+    "fraccion": 0.01,
+    "contrastivo": 0.811155,
+    "contrastivo_sd": 0.016031,
+    "caracteristicas": 0.943347,
+    "caracteristicas_sd": 0.009236
+   },
+   {
+    "fraccion": 0.05,
+    "contrastivo": 0.870569,
+    "contrastivo_sd": 0.005072,
+    "caracteristicas": 0.948491,
+    "caracteristicas_sd": 0.004632
+   },
+   {
+    "fraccion": 0.1,
+    "contrastivo": 0.881925,
+    "contrastivo_sd": 0.002645,
+    "caracteristicas": 0.944476,
+    "caracteristicas_sd": 0.00751
+   },
+   {
+    "fraccion": 1.0,
+    "contrastivo": 0.901186,
+    "contrastivo_sd": 0.000154,
+    "caracteristicas": 0.94824,
+    "caracteristicas_sd": 0.0
+   }
+  ],
+  "historial": [
+   {
+    "epoca": 0,
+    "perdida": null,
+    "knn": 0.865333,
+    "sonda_logistica": 0.864667,
+    "r2_pose": 0.587359
+   },
+   {
+    "epoca": 1,
+    "perdida": 4.955932,
+    "knn": 0.870667,
+    "sonda_logistica": 0.873333,
+    "r2_pose": 0.586902
+   },
+   {
+    "epoca": 2,
+    "perdida": 3.890056,
+    "knn": 0.83,
+    "sonda_logistica": 0.837333,
+    "r2_pose": 0.500935
+   },
+   {
+    "epoca": 3,
+    "perdida": 2.83865,
+    "knn": 0.794,
+    "sonda_logistica": 0.813333,
+    "r2_pose": 0.455127
+   },
+   {
+    "epoca": 4,
+    "perdida": 2.376633,
+    "knn": 0.808,
+    "sonda_logistica": 0.818667,
+    "r2_pose": 0.466799
+   },
+   {
+    "epoca": 5,
+    "perdida": 2.211989,
+    "knn": 0.806667,
+    "sonda_logistica": 0.820667,
+    "r2_pose": 0.470381
+   },
+   {
+    "epoca": 6,
+    "perdida": 2.170907,
+    "knn": 0.808,
+    "sonda_logistica": 0.822,
+    "r2_pose": 0.473552
+   }
+  ],
+  "n_ventanas": 35280
+ },
+ "figuras": [
+  {
+   "archivo": "figuras\\C7_contrastivo.png",
+   "ancho_cm": 16
+  }
+ ],
+ "cumple": false,
+ "conclusion": "1 % de etiquetas: contrastivo 81.1 % vs características 94.3 %; 5 % de etiquetas: contrastivo 87.1 % vs características 94.8 %; 10 % de etiquetas: contrastivo 88.2 % vs características 94.4 %; 100 % de etiquetas: contrastivo 90.1 % vs características 94.8 %.",
+ "fecha": "2026-10-28 13:50",
+ "duracion_s": 4882.5
+}

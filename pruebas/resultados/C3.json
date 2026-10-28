@@ -1,0 +1,114 @@
+{
+ "id": "C3",
+ "nombre": "Generalización a personas nuevas",
+ "grupo": "C. Modelos de IA",
+ "objetivo": "Medir el desempeño de la campeona de la competencia con las 20 personas del examen, que ninguna red vio nunca.",
+ "requerimientos": [
+  "RF-06",
+  "RF-07",
+  "RF-13",
+  "RNF-01"
+ ],
+ "procedimiento": "Se carga la campeona más reciente del motor y se evalúa en el examen fijo (20 personas de los 5 niveles de dificultad, cada una con su calibración). Se calculan acierto, recall por gesto, pseudo-R² de McFadden, R² de la pose, la matriz de confusión y el intervalo de confianza del 95 % del acierto por persona (bootstrap).",
+ "criterio": "Acierto ≥ 90 % y recall ≥ 85 % en cada gesto (RNF-01).",
+ "resultado": {
+  "acierto": 0.996875,
+  "pseudo_r2": 0.994284,
+  "r2_pose": 0.962205,
+  "campeona": 7,
+  "generacion": 12,
+  "recall": [
+   1.0,
+   0.994792,
+   0.991667,
+   0.99375,
+   0.997917,
+   1.0,
+   1.0
+  ],
+  "recall_min": 0.991667,
+  "ic95_acierto": [
+   0.994345,
+   0.998958
+  ],
+  "acierto_por_persona_min": 0.982143,
+  "acierto_sin_transiciones": 0.997826,
+  "matriz": [
+   [
+    960,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   [
+    5,
+    955,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   [
+    0,
+    0,
+    952,
+    7,
+    1,
+    0,
+    0
+   ],
+   [
+    0,
+    0,
+    2,
+    954,
+    4,
+    0,
+    0
+   ],
+   [
+    0,
+    0,
+    0,
+    2,
+    958,
+    0,
+    0
+   ],
+   [
+    0,
+    0,
+    0,
+    0,
+    0,
+    960,
+    0
+   ],
+   [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    960
+   ]
+  ],
+  "parametros": 7309,
+  "n": 6720
+ },
+ "figuras": [
+  {
+   "archivo": "figuras\\C3_generalizacion.png",
+   "ancho_cm": 16
+  }
+ ],
+ "cumple": true,
+ "conclusion": "Campeona #7 (generación 12): acierto 99.69 % (IC 95 %: 99.4–99.9 %), recall mínimo 99.2 % (Puño), pseudo-R² 0.994, R² pose 0.962.",
+ "fecha": "2026-10-27 16:44",
+ "duracion_s": 12.6
+}

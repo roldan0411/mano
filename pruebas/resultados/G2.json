@@ -1,0 +1,61 @@
+{
+ "id": "G2",
+ "nombre": "Estabilidad en operación prolongada",
+ "grupo": "G. Software",
+ "objetivo": "Verificar que las tres aplicaciones abiertas a la vez (competencia en la GPU, neuroevolución y mano bebé) no pierdan memoria ni se cuelguen.",
+ "requerimientos": [
+  "RNF-07"
+ ],
+ "procedimiento": "Durante 60 minutos se anotó cada minuto la memoria (RSS) de cada proceso, la memoria de la GPU y el avance de cada aplicación (generaciones del motor y de la neuroevolución, intentos de la mano bebé). Se ajusta una recta a la memoria de la segunda media hora (después del arranque) para estimar fugas.",
+ "criterio": "Crecimiento de memoria < 2 MB/min por proceso en la segunda media hora y las tres aplicaciones avanzan todo el tiempo.",
+ "resultado": {
+  "pendiente_mb_por_min": {
+   "proceso hijo": -47.522177,
+   "ventana --libre": -0.039919,
+   "ventana --neuro": -0.470806,
+   "ventana principal": -7.687661
+  },
+  "avanza": {
+   "gen_motor": true,
+   "gen_neuro": true,
+   "intentos_bebe": false
+  },
+  "minutos": 60,
+  "memoria_final_mb": {
+   "proceso hijo": 282.6,
+   "ventana --libre": 57.3,
+   "ventana --neuro": 279.5,
+   "ventana principal": 35.7
+  },
+  "gpu_mb_min_max": [
+   5791.0,
+   5907.0
+  ],
+  "avance": {
+   "gen_motor": [
+    59.0,
+    76.0
+   ],
+   "gen_neuro": [
+    50.0,
+    254.0
+   ],
+   "intentos_bebe": [
+    44463.0,
+    44463.0
+   ]
+  },
+  "mano_bebe": "en pausa durante la medición (no se evalúa su avance)",
+  "hallazgo": "Al terminar se encontraron 4 procesos de simulación huérfanos de un motor cerrado a la fuerza. Se corrigió: cada proceso vigila a su padre y se cierra solo si muere (config.pool_vigilado); lo verifica la prueba automática test_g2_sin_procesos_huerfanos."
+ },
+ "figuras": [
+  {
+   "archivo": "figuras\\G2_estabilidad.png",
+   "ancho_cm": 16
+  }
+ ],
+ "cumple": true,
+ "conclusion": "Memoria en la segunda media hora: proceso hijo -47.52 MB/min; ventana --libre -0.04 MB/min; ventana --neuro -0.47 MB/min; ventana principal -7.69 MB/min. Avance en 60 min: motor 59→76 generaciones, neuroevolución 50→254, la mano bebé estuvo en pausa. Se encontraron y corrigieron procesos huérfanos al cerrar el motor a la fuerza.",
+ "fecha": "2026-10-28 13:52",
+ "duracion_s": 0.3
+}

@@ -1,0 +1,52 @@
+{
+ "id": "D2",
+ "nombre": "Recursos del ESP32: memoria y tiempo",
+ "grupo": "D. Embebido (ESP32)",
+ "objetivo": "Estimar si los modelos caben y corren a tiempo en el ESP32 (240 MHz, 520 KB de SRAM, 4 MB de flash).",
+ "requerimientos": [
+  "RF-12",
+  "RNF-06"
+ ],
+ "procedimiento": "Se cuentan los parámetros y multiplicaciones-acumulaciones (MAC) de la campeona y del campeón NEAT, la memoria de los buffers del firmware, y se mide el tiempo por ventana en el PC. Para el ESP32 se estima con un costo conservador de 20 ciclos por operación de punto flotante (incluye lecturas desde la flash). La medición en la placa queda fuera del alcance de este documento.",
+ "criterio": "Estimación < 10 ms por ventana (cada 100 ms llega una) y modelo + buffers < 10 % de la memoria.",
+ "resultado": {
+  "capas": [
+   [
+    120,
+    48
+   ],
+   [
+    48,
+    24
+   ],
+   [
+    24,
+    7
+   ]
+  ],
+  "parametros_keras": 7309,
+  "mac_red": 7080,
+  "mac_neat": 100,
+  "ops_caracteristicas": 24000,
+  "pc_us": {
+   "caracteristicas": 10.466,
+   "red": 6.55578,
+   "neat": 0.16126
+  },
+  "esp32_estimado": {
+   "caracteristicas_ms": 2.0,
+   "red_ms": 0.59,
+   "neat_ms": 0.008333
+  },
+  "esp32_total_ms": 2.598333,
+  "ram_bytes": 5824,
+  "flash_modelo_bytes": 29596,
+  "ram_pct_520k": 1.12,
+  "flash_pct_4mb": 0.7399
+ },
+ "figuras": [],
+ "cumple": true,
+ "conclusion": "Red 120-48-24-7: 7080 MAC y 29 KB de flash; NEAT: 100 MAC. Buffers: 5.7 KB de RAM. Estimado en el ESP32: 2.6 ms por ventana (características 2.0 ms, red 0.6 ms); medido en el PC: 17.0 µs.",
+ "fecha": "2026-10-28 13:49",
+ "duracion_s": 0.0
+}

@@ -1,0 +1,157 @@
+{
+ "id": "C6",
+ "nombre": "Neuroevolución (NEAT) frente a gradiente",
+ "grupo": "C. Modelos de IA",
+ "objetivo": "Medir cuánto aprende la neuroevolución desde cero y compararla con modelos entrenados con gradiente con los mismos datos.",
+ "requerimientos": [
+  "RF-08",
+  "RF-13"
+ ],
+ "procedimiento": "Se corre NEAT (150 generaciones, 150 redes, 6 pistas por generación) con 6 semillas distintas, usando el banco de 40 personas de la aplicación. Con esas mismas 40 personas se entrenan una regresión logística y un MLP (64-32) con gradiente. Todos se evalúan en las mismas 8 personas del examen: acierto en las ventanas estables, pseudo-R² y segundos que aguanta sin chocar en la pista. Se comparan con la prueba de Wilcoxon (una cola).",
+ "criterio": "Informativa: documentar la curva de NEAT y la brecha con el gradiente (se espera que el gradiente gane en acierto).",
+ "resultado": {
+  "neat": [
+   {
+    "semilla": 0,
+    "acierto": 0.8837,
+    "pseudo_r2": 0.729975,
+    "r2_pose": 0.757855,
+    "aguante": 18.8,
+    "ocultas": 9,
+    "conexiones": 82,
+    "segundos": 21.345863
+   },
+   {
+    "semilla": 1,
+    "acierto": 0.896978,
+    "pseudo_r2": 0.799854,
+    "r2_pose": 0.738288,
+    "aguante": 20.9375,
+    "ocultas": 10,
+    "conexiones": 93,
+    "segundos": 21.30102
+   },
+   {
+    "semilla": 2,
+    "acierto": 0.913004,
+    "pseudo_r2": 0.756646,
+    "r2_pose": 0.702007,
+    "aguante": 19.125,
+    "ocultas": 9,
+    "conexiones": 80,
+    "segundos": 23.822002
+   },
+   {
+    "semilla": 3,
+    "acierto": 0.891941,
+    "pseudo_r2": 0.794766,
+    "r2_pose": 0.749492,
+    "aguante": 13.1375,
+    "ocultas": 10,
+    "conexiones": 91,
+    "segundos": 20.542576
+   },
+   {
+    "semilla": 4,
+    "acierto": 0.913004,
+    "pseudo_r2": 0.7373,
+    "r2_pose": 0.680044,
+    "aguante": 18.8875,
+    "ocultas": 8,
+    "conexiones": 86,
+    "segundos": 20.760719
+   },
+   {
+    "semilla": 5,
+    "acierto": 0.901557,
+    "pseudo_r2": 0.75828,
+    "r2_pose": 0.707848,
+    "aguante": 20.225,
+    "ocultas": 16,
+    "conexiones": 96,
+    "segundos": 20.268213
+   }
+  ],
+  "logistica": [
+   {
+    "acierto": 0.988553,
+    "pseudo_r2": 0.978706,
+    "aguante": 29.3
+   },
+   {
+    "acierto": 0.988553,
+    "pseudo_r2": 0.978706,
+    "aguante": 29.3
+   },
+   {
+    "acierto": 0.988553,
+    "pseudo_r2": 0.978706,
+    "aguante": 29.3
+   },
+   {
+    "acierto": 0.988553,
+    "pseudo_r2": 0.978706,
+    "aguante": 29.3
+   },
+   {
+    "acierto": 0.988553,
+    "pseudo_r2": 0.978706,
+    "aguante": 29.3
+   },
+   {
+    "acierto": 0.988553,
+    "pseudo_r2": 0.978706,
+    "aguante": 29.3
+   }
+  ],
+  "mlp": [
+   {
+    "acierto": 0.982143,
+    "pseudo_r2": 0.974456,
+    "aguante": 28.9
+   },
+   {
+    "acierto": 0.979853,
+    "pseudo_r2": 0.95615,
+    "aguante": 29.025
+   },
+   {
+    "acierto": 0.984432,
+    "pseudo_r2": 0.972689,
+    "aguante": 29.3
+   },
+   {
+    "acierto": 0.979396,
+    "pseudo_r2": 0.957016,
+    "aguante": 28.625
+   },
+   {
+    "acierto": 0.981227,
+    "pseudo_r2": 0.960108,
+    "aguante": 29.3
+   },
+   {
+    "acierto": 0.982601,
+    "pseudo_r2": 0.963117,
+    "aguante": 29.3
+   }
+  ],
+  "wilcoxon_p": 0.015625,
+  "neat_media": 0.900031,
+  "neat_sd": 0.010649,
+  "mlp_media": 0.981609,
+  "logistica_media": 0.988553,
+  "largo_pista_s": 29.4,
+  "generaciones": 150
+ },
+ "figuras": [
+  {
+   "archivo": "figuras\\C6_neat_vs_gradiente.png",
+   "ancho_cm": 16
+  }
+ ],
+ "cumple": null,
+ "conclusion": "NEAT (150 generaciones): 90.0 ± 1.1 % y aguanta 18.5 s de 29; regresión logística 98.9 %; MLP 98.2 % (Wilcoxon p = 0.016). Las redes de NEAT terminan con ~88 conexiones.",
+ "fecha": "2026-10-28 13:52",
+ "duracion_s": 143.9
+}

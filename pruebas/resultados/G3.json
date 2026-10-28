@@ -1,0 +1,44 @@
+{
+ "id": "G3",
+ "nombre": "Portátil: batería y poca RAM",
+ "grupo": "G. Software",
+ "objetivo": "Verificar que el motor decida bien cuándo pausarse: en batería con GPU (Windows puede apagarla) o con poca RAM; y que en batería sin GPU siga entrenando en la CPU.",
+ "requerimientos": [
+  "RNF-08"
+ ],
+ "procedimiento": "Se prueba la función motivo_pausa del motor con los 4 casos: cargador y RAM bien; batería con GPU; batería sin GPU; poca RAM.",
+ "criterio": "Las 4 decisiones son las esperadas.",
+ "resultado": {
+  "casos": [
+   {
+    "archivo": "test_persistencia",
+    "prueba": "test_g3_motor_se_adapta_a_bateria_y_ram[salud0-cuda-False]",
+    "segundos": 0.364,
+    "paso": true
+   },
+   {
+    "archivo": "test_persistencia",
+    "prueba": "test_g3_motor_se_adapta_a_bateria_y_ram[salud1-cuda-True]",
+    "segundos": 0.001,
+    "paso": true
+   },
+   {
+    "archivo": "test_persistencia",
+    "prueba": "test_g3_motor_se_adapta_a_bateria_y_ram[salud2-cpu-False]",
+    "segundos": 0.001,
+    "paso": true
+   },
+   {
+    "archivo": "test_persistencia",
+    "prueba": "test_g3_motor_se_adapta_a_bateria_y_ram[salud3-cuda-True]",
+    "segundos": 0.001,
+    "paso": true
+   }
+  ]
+ },
+ "figuras": [],
+ "cumple": true,
+ "conclusion": "4 de 4 casos correctos.",
+ "fecha": "2026-10-28 13:52",
+ "duracion_s": 0.0
+}
