@@ -145,7 +145,7 @@ def construir(ruta):
     D.p("Para las pruebas de banco se usan electrodos desechables Ag/AgCl de gel sólido **Kendall/Covidien H124SG** (Ø 24 mm, sensor de "
         "80 mm²): 11 por sesión. Para el uso diario, la recomendación es un **brazalete** con electrodos secos reutilizables de acero "
         "inoxidable (≈ 10 mm) y la referencia en la misma banda sobre el borde del cúbito; las pruebas C4 y C5 muestran que el brazalete "
-        "funciona si se recalibra al ponerlo y si la red se entrena con electrodos que pierden contacto (sección 9).")
+        "funciona si se recalibra al ponerlo y si la red se entrena con electrodos que pierden contacto (sección 8).")
 
     # 5 -------------------------------------------------------------------------
     D.h1("Modelos matemáticos del gemelo digital")

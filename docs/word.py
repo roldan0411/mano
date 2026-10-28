@@ -9,7 +9,6 @@ import re
 from pathlib import Path
 
 from docx import Document
-from docx.enum.section import WD_ORIENT
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK, WD_TAB_ALIGNMENT
 from docx.oxml import OxmlElement
@@ -124,7 +123,9 @@ class Documento:
         self.d.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
 
     def indice(self):
-        self.h1("Contenido", numerar=False)
+        t = self.d.add_paragraph()
+        r = t.add_run("Contenido")
+        r.font.size, r.font.bold, r.font.color.rgb = Pt(16), True, AZUL
         _campo(self.d.add_paragraph(), 'TOC \\o "1-3" \\h \\z \\u', "Actualizar el índice: clic derecho → Actualizar campo.")
         self.salto()
 

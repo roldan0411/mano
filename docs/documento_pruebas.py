@@ -124,7 +124,8 @@ def construir(ruta):
         ["Compilador C", "zig cc (paquete ziglang 0.16.0), C99, -O2, para compilar el firmware en el PC"],
         ["Datos", "Lotes del motor (personas virtuales de 5 niveles), examen fijo de 20 personas, pistas de neuroevolución, dataset UCI «EMG data for gestures»"],
         ["Modelos evaluados", f"Campeona #{R['C3']['resultado']['campeona']} de la competencia; campeón NEAT #{R['D1']['resultado']['campeon_neat']}"],
-        ["Ejecución", "26 y 27 de octubre de 2026, con las aplicaciones abiertas (la CPU y la GPU compartidas)"],
+        ["Ejecución", f"Del {min(r['fecha'] for r in R.values())} al {max(r['fecha'] for r in R.values())}, con las aplicaciones "
+                                      "abiertas (la CPU y la GPU compartidas)"],
     ], "Entorno de ejecución.", anchos=[3.5, 13])
 
     D.h1("Matriz de trazabilidad")
