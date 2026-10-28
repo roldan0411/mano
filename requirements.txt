@@ -29,3 +29,4 @@ pytest
 ziglang
 python-docx
 latex2mathml
+pymupdf
