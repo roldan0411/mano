@@ -168,8 +168,13 @@ class Documento:
         return self._runs(par, texto)
 
     def vinetas(self, items, numeradas=False):
-        for it in items:
-            self._runs(self.d.add_paragraph(style="List Number" if numeradas else "List Bullet"), it)
+        for k, it in enumerate(items, 1):
+            if numeradas:                                        # numeración propia: cada lista empieza en 1
+                par = self._runs(self.d.add_paragraph(), f"{k}.	{it}")
+                par.paragraph_format.left_indent, par.paragraph_format.first_line_indent = Cm(0.8), Cm(-0.6)
+                par.paragraph_format.tab_stops.add_tab_stop(Cm(0.8))
+            else:
+                self._runs(self.d.add_paragraph(style="List Bullet"), it)
 
     def nota(self, texto):
         par = self.p(texto)
@@ -241,6 +246,11 @@ class Documento:
             for fila in t.rows:
                 for k, w in enumerate(anchos):
                     fila.cells[k].width = Cm(w)
+        for i, fila in enumerate(t.rows):                        # las filas no se parten; el encabezado se repite
+            trPr = fila._tr.get_or_add_trPr()
+            trPr.append(OxmlElement("w:cantSplit"))
+            if i == 0:
+                trPr.append(OxmlElement("w:tblHeader"))
         self.d.add_paragraph().paragraph_format.space_after = Pt(2)
         return t
 
