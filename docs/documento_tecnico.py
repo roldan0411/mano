@@ -1,13 +1,19 @@
 """Documento técnico del sistema (requerimientos, arquitectura, modelos matemáticos, software y resultados)."""
 
-from datos_documentos import CAPTURAS, R, REQUERIMIENTOS, es, estado, fig, ficha_campeona, ficha_neat, n, pc, trazabilidad
+import ast
+
+from datos_documentos import CAPTURAS, R, RAIZ, REQUERIMIENTOS, es, estado, fig, ficha_campeona, ficha_neat, n, pc, trazabilidad
 from word import Documento
 
 import ia_mano as ia
 import simulador as sm
-from gemelo.libre import bebe
-from gemelo.neuro import neat, servicio as neuro_srv
-from gemelo.motor import poblacion
+from gemelo.neuro import neat
+
+
+def opciones_genoma():
+    """OPCIONES de gemelo/motor/poblacion.py, leídas del código (importarlo exige PyTorch)."""
+    arbol = ast.parse((RAIZ / "gemelo" / "motor" / "poblacion.py").read_text(encoding="utf-8"))
+    return next(ast.literal_eval(n.value) for n in arbol.body if isinstance(n, ast.Assign) and n.targets[0].id == "OPCIONES")
 
 
 def construir(ruta):
@@ -215,7 +221,7 @@ def construir(ruta):
     D.ec(r"S = 0{,}6\,\mathrm{acierto} + 0{,}2\,\mathrm{máx}\!\left(R^{2}_{\mathrm{McF}},0\right) + 0{,}2\,\mathrm{máx}\!\left(R^{2}_{\mathrm{pose}},0\right)")
     D.p("Las 3 peores copian los pesos de una de las 3 mejores y mutan su genoma; cada 12 generaciones entra una red nueva al azar. Si la "
         "mejor supera a la campeona por más de 0,003, se corona y se exporta.")
-    D.tabla(["Gen", "Opciones"], [[k, ", ".join(map(str, v))] for k, v in poblacion.OPCIONES.items()] +
+    D.tabla(["Gen", "Opciones"], [[k, ", ".join(map(str, v))] for k, v in opciones_genoma().items()] +
             [["lr", "10^U(−3,4; −2,3); muta ×0,7 a ×1,4"]], "Espacio de genomas de la competencia.", anchos=[3, 13.5])
     D.fig(fig("T_red_competencia.png"), "Arquitectura de la red campeona que se exporta al ESP32.", 15)
     D.h2("Métricas: R² y pseudo-R²")
