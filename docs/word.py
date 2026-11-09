@@ -52,7 +52,7 @@ def _campo(parrafo, instruccion, texto="…"):
 
 class Documento:
     def __init__(self, titulo, subtitulo, codigo, version="1.0", fecha="28 de octubre de 2026",
-                 autor="Roldán Rodríguez — Ingeniería en Ciencias de la Computación e Inteligencia Artificial"):
+                 autor="Roldán Rodríguez (01251152003) y Santiago Merchán (01251151009)"):
         self.d = Document()
         self.n = {"h1": 0, "h2": 0, "h3": 0, "fig": 0, "tab": 0, "ec": 0}
         self.titulo = titulo
@@ -111,7 +111,10 @@ class Documento:
             self.d.add_paragraph()
         t = self.d.add_table(rows=0, cols=2)
         t.alignment = WD_TABLE_ALIGNMENT.CENTER
-        for k, v in (("Autor", autor), ("Código del documento", codigo), ("Versión", version), ("Fecha", fecha),
+        for k, v in (("Estudiantes", autor), ("Universidad", "Universidad de Santander — Facultad de Ingenierías"),
+                     ("Programa", "Ingeniería en Ciencias Computacionales e Inteligencia Artificial"),
+                     ("Asignatura", "Fundamento de Electrónica y Computación"), ("Docente", "Ing. Daniel Romero"),
+                     ("Código del documento", codigo), ("Versión", version), ("Fecha", fecha),
                      ("Repositorio", "github.com/roldan0411/mano")):
             c = t.add_row().cells
             c[0].text, c[1].text = k, v

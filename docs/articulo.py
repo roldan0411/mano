@@ -191,10 +191,11 @@ def construir(ruta):
     t = A.par("Gemelo digital de una prótesis mioeléctrica de mano con diez electrodos: reconocimiento de gestos mediante "
               "competencia de redes, neuroevolución y aprendizaje autónomo", 16, negrita=True, centro=True, antes=71)
     A.blanco(10, 2)
-    A.par("Roldán Rodríguez", 12, centro=True)
-    A.par("Código: 01251152003", 12, centro=True)
+    A.par("Roldán Rodríguez, Santiago Merchán", 12, centro=True)
+    A.par("Códigos: 01251152003, 01251151009", 12, centro=True)
     A.blanco(10)
-    for linea in ("[[Universidad]], Facultad de [[Facultad]],", "Programa de Ingeniería en Ciencias Computacionales e Inteligencia Artificial",
+    for linea in ("Universidad de Santander, Facultad de Ingenierías,", "Programa de Ingeniería en Ciencias Computacionales e Inteligencia Artificial",
+                  "Fundamento de Electrónica y Computación · Docente: Ing. Daniel Romero",
                   "Bucaramanga, Santander, Colombia", "roldanrodriguez11@gmail.com", "Noviembre-2026"):
         A.par(linea, 11, centro=True)
     A.blanco(10, 3)
@@ -374,8 +375,8 @@ def construir(ruta):
             "despegados al azar; reducir la latencia; construir el brazalete y medir en la placa el tiempo de inferencia; y validar con "
             "personas mediante un conjunto de datos propio y pruebas funcionales.")
     A.par("Agradecimientos", 12, negrita=True, justificar=False, antes=12, despues=11)
-    A.texto("El autor agradece al programa de Ingeniería en Ciencias Computacionales e Inteligencia Artificial y a [[docentes / "
-            "asignatura]] por el apoyo durante el desarrollo del proyecto.")
+    A.texto("Los autores agradecen al Ing. Daniel Romero, docente de la asignatura Fundamento de Electrónica y Computación, y a la "
+            "Facultad de Ingenierías de la Universidad de Santander por el apoyo recibido durante el desarrollo del proyecto.")
     A.par("Referencias", 12, negrita=True, justificar=False, antes=12, despues=11)
     A.referencias([
         ("AD620", "Analog Devices. 'AD620: Low Cost Low Power Instrumentation Amplifier'. Hoja de datos."),
